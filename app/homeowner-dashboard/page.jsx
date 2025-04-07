@@ -1,3 +1,6 @@
+"use client"
+
+import { AIPredictionSidebar } from "@/components/ai-prediction-sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,7 +24,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useCallback, useRef } from "react"
-
+import { AreaCalculator } from "./area-calculator"
+import { CostComparisonChart } from "./cost-comparison-chart"
+import { LiveCostTracker } from "./live-cost-tracker"
 import { Progress } from "@/components/ui/progress"
 
 // Function to format numbers in Indian currency format
