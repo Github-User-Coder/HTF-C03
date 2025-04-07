@@ -9,7 +9,7 @@ export default function LandingPage() {
       <header className="container mx-auto px-4 py-8 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Construction className="h-8 w-8 text-blue-400" />
-          <h1 className="text-2xl font-bold">BuildSmart</h1>
+          <h1 className="text-2xl font-bold">BuildSmart AI</h1>
         </div>
         <div className="flex gap-4">
           <Link href="/login">
