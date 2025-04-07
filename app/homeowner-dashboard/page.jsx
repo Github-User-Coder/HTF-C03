@@ -1,6 +1,5 @@
 "use client"
 
-import { AIPredictionSidebar } from "@/components/ai-prediction-sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,7 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
+  AlertCircle,
   Building2,
+  CheckCircle2,
+  CloudRain,
   Construction,
   DollarSign,
   Home,
@@ -20,6 +22,7 @@ import {
   School,
   ShoppingBag,
   User,
+  Users,
   Warehouse,
 } from "lucide-react"
 import Link from "next/link"
@@ -28,6 +31,8 @@ import { AreaCalculator } from "./area-calculator"
 import { CostComparisonChart } from "./cost-comparison-chart"
 import { LiveCostTracker } from "./live-cost-tracker"
 import { Progress } from "@/components/ui/progress"
+import { WeatherSchedulingContent } from "@/components/weather-scheduling-content"
+import GoogleMapsLabor from "@/components/google-maps-labor"
 
 // Function to format numbers in Indian currency format
 function formatIndianCurrency(num) {
@@ -202,7 +207,7 @@ const myProjects = [
     id: 1,
     name: "Dream Home Construction",
     type: "3BHK",
-    location: "123 Main St, Mumbai",
+    location: "Mumbai",
     progress: 35,
     startDate: "2023-05-15",
     endDate: "2023-12-20",
@@ -213,7 +218,7 @@ const myProjects = [
     id: 2,
     name: "Vacation Villa",
     type: "Villa",
-    location: "Beach Road, Goa",
+    location: "Goa",
     progress: 10,
     startDate: "2023-08-10",
     endDate: "2024-06-30",
@@ -250,6 +255,131 @@ const profileData = {
   joinDate: "January 15, 2023",
 }
 
+// Add this mock data for labor teams after the other sample data (after profileData)
+// Sample labor teams data
+const laborTeamsData = [
+  {
+    id: 1,
+    name: "Premier Construction Crew",
+    type: "General Construction",
+    members: 12,
+    rating: 4.8,
+    distance: 3.2,
+    availability: "Immediate",
+    skills: ["Masonry", "Carpentry", "Plumbing", "Electrical"],
+    completedProjects: 87,
+    hourlyRate: 450,
+    contactPerson: "Rajesh Kumar",
+    phone: "+91 98765 43210",
+    location: "Andheri East, Mumbai",
+  },
+  {
+    id: 2,
+    name: "Elite Finishing Team",
+    type: "Interior Finishing",
+    members: 8,
+    rating: 4.9,
+    distance: 5.7,
+    availability: "In 3 days",
+    skills: ["Painting", "Tiling", "Woodwork", "False Ceiling"],
+    completedProjects: 64,
+    hourlyRate: 520,
+    contactPerson: "Sunil Sharma",
+    phone: "+91 87654 32109",
+    location: "Bandra West, Mumbai",
+  },
+  {
+    id: 3,
+    name: "Foundation Specialists",
+    type: "Foundation & Structural",
+    members: 15,
+    rating: 4.7,
+    distance: 7.1,
+    availability: "In 1 week",
+    skills: ["Excavation", "Concrete Work", "Steel Fixing", "Waterproofing"],
+    completedProjects: 42,
+    hourlyRate: 580,
+    contactPerson: "Amit Patel",
+    phone: "+91 76543 21098",
+    location: "Worli, Mumbai",
+  },
+  {
+    id: 4,
+    name: "Electrical Experts",
+    type: "Electrical",
+    members: 6,
+    rating: 4.9,
+    distance: 4.3,
+    availability: "In 2 days",
+    skills: ["Wiring", "Panel Installation", "Lighting", "Troubleshooting"],
+    completedProjects: 93,
+    hourlyRate: 490,
+    contactPerson: "Vikram Singh",
+    phone: "+91 65432 10987",
+    location: "Powai, Mumbai",
+  },
+  {
+    id: 5,
+    name: "Plumbing Solutions",
+    type: "Plumbing",
+    members: 7,
+    rating: 4.6,
+    distance: 6.8,
+    availability: "Immediate",
+    skills: ["Pipe Fitting", "Drainage", "Fixture Installation", "Water Heaters"],
+    completedProjects: 78,
+    hourlyRate: 460,
+    contactPerson: "Deepak Verma",
+    phone: "+91 54321 09876",
+    location: "Chembur, Mumbai",
+  },
+  {
+    id: 6,
+    name: "Roofing Masters",
+    type: "Roofing",
+    members: 9,
+    rating: 4.7,
+    distance: 8.5,
+    availability: "In 5 days",
+    skills: ["Shingle Roofing", "Metal Roofing", "Waterproofing", "Repairs"],
+    completedProjects: 56,
+    hourlyRate: 510,
+    contactPerson: "Prakash Joshi",
+    phone: "+91 43210 98765",
+    location: "Thane, Mumbai",
+  },
+  {
+    id: 7,
+    name: "Concrete Specialists",
+    type: "Concrete Work",
+    members: 11,
+    rating: 4.8,
+    distance: 5.2,
+    availability: "In 2 days",
+    skills: ["Concrete Pouring", "Stamping", "Polishing", "Repairs"],
+    completedProjects: 68,
+    hourlyRate: 530,
+    contactPerson: "Manoj Tiwari",
+    phone: "+91 32109 87654",
+    location: "Malad, Mumbai",
+  },
+  {
+    id: 8,
+    name: "Painting Professionals",
+    type: "Painting",
+    members: 8,
+    rating: 4.9,
+    distance: 4.8,
+    availability: "Immediate",
+    skills: ["Interior Painting", "Exterior Painting", "Texturing", "Wallpaper"],
+    completedProjects: 112,
+    hourlyRate: 420,
+    contactPerson: "Sanjay Gupta",
+    phone: "+91 21098 76543",
+    location: "Juhu, Mumbai",
+  },
+]
+
 export default function HomeownerDashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [siteDimensions, setSiteDimensions] = useState({ length: "", width: "" })
@@ -265,6 +395,13 @@ export default function HomeownerDashboard() {
   const [overheadCost, setOverheadCost] = useState(0)
   const [budgetLimit, setBudgetLimit] = useState(1000000) // 10 lakhs default
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [selectedLocation, setSelectedLocation] = useState("Mumbai")
+  const [navigationHistory, setNavigationHistory] = useState(["dashboard"])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterType, setFilterType] = useState("All")
+  const [sortBy, setSortBy] = useState("distance")
+  const [selectedTeamId, setSelectedTeamId] = useState(null)
+  const [showDirections, setShowDirections] = useState(false)
 
   // Use refs to track previous values and prevent unnecessary updates
   const prevAreaRef = useRef(area)
@@ -346,6 +483,9 @@ export default function HomeownerDashboard() {
         setEquipmentCost(calculatedEquipmentCost)
         setOverheadCost(calculatedOverheadCost)
         setTotalCost(result.totalCost)
+
+        // Update selected location
+        setSelectedLocation(typeof location === "string" ? location : "Mumbai")
       } else if (constructionType === "building" && subType) {
         result = JSON.parse(JSON.stringify(projectEstimations.building[subType]))
 
@@ -403,6 +543,9 @@ export default function HomeownerDashboard() {
         setEquipmentCost(calculatedEquipmentCost)
         setOverheadCost(calculatedOverheadCost)
         setTotalCost(result.totalCost)
+
+        // Update selected location
+        setSelectedLocation(typeof location === "string" ? location : "Mumbai")
       } else {
         // Default to 3BHK if no valid selection
         result = JSON.parse(JSON.stringify(projectEstimations.house["3BHK"]))
@@ -412,6 +555,323 @@ export default function HomeownerDashboard() {
       setEstimationResult(result)
       setIsLoading(false)
     }, 2000)
+  }
+
+  const navigateTo = (tab) => {
+    // Don't add duplicate consecutive entries
+    if (tab !== activeTab) {
+      setNavigationHistory((prev) => [...prev, tab])
+      setActiveTab(tab)
+    }
+  }
+
+  const goBack = () => {
+    if (navigationHistory.length > 1) {
+      // Create a copy of the history
+      const newHistory = [...navigationHistory]
+      // Remove the current page from history
+      newHistory.pop()
+      // Get the previous page
+      const previousTab = newHistory[newHistory.length - 1]
+      // Update state
+      setNavigationHistory(newHistory)
+      setActiveTab(previousTab)
+    }
+  }
+
+  // Risk Alerts tab content
+  const renderRiskAlertsContent = () => {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <div className="flex items-center justify-between mb-2">
+              <CardTitle className="text-white">Project Risk Alerts</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-white border-gray-600 hover:bg-gray-700"
+                onClick={goBack}
+              >
+                Back to Dashboard
+              </Button>
+            </div>
+            <CardDescription className="text-white">
+              AI-powered risk detection and mitigation recommendations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* High Priority Risks */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">High Priority Risks</h3>
+              <div className="space-y-3">
+                <div className="p-4 bg-red-600/20 border border-red-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-red-600/30 p-2 rounded-full">
+                      <AlertCircle className="h-5 w-5 text-red-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Budget Overrun Risk</h4>
+                      <p className="text-white/80 mt-1">
+                        Current spending trajectory indicates a potential 15% budget overrun by project completion.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                          View Details
+                        </Button>
+                        <Button size="sm" variant="outline" className="border-red-600 text-red-400 hover:bg-red-600/20">
+                          Mitigation Plan
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-red-600/20 border border-red-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-red-600/30 p-2 rounded-full">
+                      <CloudRain className="h-5 w-5 text-red-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Severe Weather Alert</h4>
+                      <p className="text-white/80 mt-1">
+                        Heavy rainfall predicted for the next 7 days may cause significant delays to foundation work.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                          View Forecast
+                        </Button>
+                        <Button size="sm" variant="outline" className="border-red-600 text-red-400 hover:bg-red-600/20">
+                          Adjust Schedule
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Medium Priority Risks */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Medium Priority Risks</h3>
+              <div className="space-y-3">
+                <div className="p-4 bg-amber-600/20 border border-amber-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-amber-600/30 p-2 rounded-full">
+                      <Package className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Material Shortage</h4>
+                      <p className="text-white/80 mt-1">
+                        Steel delivery may be delayed by 2 weeks due to supply chain disruptions.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+                          Alternative Suppliers
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-amber-600/20 border border-amber-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-amber-600/30 p-2 rounded-full">
+                      <Users className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Labor Availability</h4>
+                      <p className="text-white/80 mt-1">
+                        Skilled electrician shortage predicted during weeks 8-10 of the project.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+                          Workforce Planning
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Low Priority Risks */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Low Priority Risks</h3>
+              <div className="space-y-3">
+                <div className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-600/30 p-2 rounded-full">
+                      <DollarSign className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Price Fluctuation</h4>
+                      <p className="text-white/80 mt-1">
+                        Cement prices expected to increase by 3-5% in the next month.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                          Procurement Strategy
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Risk Mitigation Recommendations</CardTitle>
+            <CardDescription className="text-white">
+              AI-generated strategies to address identified project risks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-700 rounded-lg">
+                <h4 className="font-medium text-white mb-2">Budget Management Plan</h4>
+                <ul className="space-y-2 text-white/80">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                    <span>
+                      Review material specifications to identify cost-saving alternatives without compromising quality
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                    <span>Implement weekly budget tracking meetings to identify and address overruns early</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                    <span>Consider phasing non-critical work to distribute costs over a longer period</span>
+                  </li>
+                </ul>
+                <Button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white">Generate Detailed Plan</Button>
+              </div>
+
+              <div className="p-4 bg-gray-700 rounded-lg">
+                <h4 className="font-medium text-white mb-2">Weather Contingency Strategy</h4>
+                <ul className="space-y-2 text-white/80">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                    <span>Rent temporary weather protection structures for critical foundation work</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                    <span>Reschedule exterior work to later phases when weather conditions improve</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                    <span>Accelerate interior work during rainy periods to maintain overall progress</span>
+                  </li>
+                </ul>
+                <Button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white">
+                  View Weather-Optimized Schedule
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Risk Monitoring Dashboard</CardTitle>
+            <CardDescription className="text-white">Real-time tracking of project risk indicators</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium text-white">Budget Risk</h4>
+                  <span className="px-2 py-1 bg-red-600/30 text-red-400 rounded-full text-xs font-medium">High</span>
+                </div>
+                <Progress value={75} className="h-2 mb-2" />
+                <p className="text-xs text-white/70">15% over budget projection</p>
+              </div>
+
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium text-white">Schedule Risk</h4>
+                  <span className="px-2 py-1 bg-amber-600/30 text-amber-400 rounded-full text-xs font-medium">
+                    Medium
+                  </span>
+                </div>
+                <Progress value={45} className="h-2 mb-2" />
+                <p className="text-xs text-white/70">7 days behind schedule</p>
+              </div>
+
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium text-white">Quality Risk</h4>
+                  <span className="px-2 py-1 bg-green-600/30 text-green-400 rounded-full text-xs font-medium">Low</span>
+                </div>
+                <Progress value={15} className="h-2 mb-2" />
+                <p className="text-xs text-white/70">All inspections passed</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-700 p-4 rounded-lg">
+              <h4 className="font-medium text-white mb-3">Risk Trend Analysis</h4>
+              <div className="h-48 relative">
+                {/* Simple line chart visualization */}
+                <div className="absolute inset-0 flex items-end">
+                  <div className="h-[15%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[25%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[35%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[45%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[75%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[65%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[70%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[50%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                </div>
+
+                {/* Overlay grid lines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  <div className="border-b border-gray-600 h-1/4"></div>
+                  <div className="border-b border-gray-600 h-1/4"></div>
+                  <div className="border-b border-gray-600 h-1/4"></div>
+                  <div className="border-b border-gray-600 h-1/4"></div>
+                </div>
+
+                {/* Y-axis labels */}
+                <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-white/70 pointer-events-none">
+                  <div>High</div>
+                  <div>Medium</div>
+                  <div>Low</div>
+                  <div>None</div>
+                </div>
+
+                {/* X-axis labels */}
+                <div className="absolute left-12 right-0 bottom-0 translate-y-6 flex justify-between text-xs text-white/70 pointer-events-none">
+                  <div>Jan</div>
+                  <div>Feb</div>
+                  <div>Mar</div>
+                  <div>Apr</div>
+                  <div>May</div>
+                  <div>Jun</div>
+                  <div>Jul</div>
+                  <div>Aug</div>
+                  <div>Sep</div>
+                  <div>Oct</div>
+                  <div>Nov</div>
+                  <div>Dec</div>
+                </div>
+              </div>
+              <p className="text-sm text-white/70 mt-8">
+                Risk levels have been increasing since May, primarily due to weather and supply chain factors.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   // Render different content based on active tab
@@ -425,11 +885,452 @@ export default function HomeownerDashboard() {
         return renderMaterialsContent()
       case "expenses":
         return renderExpensesContent()
+      case "weather-scheduling":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">Weather Scheduling</h2>
+              <div className="w-64">
+                <Label htmlFor="weather-location" className="text-white mb-2 block">
+                  Location
+                </Label>
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger id="weather-location" className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                    <SelectItem value="Mumbai">Mumbai</SelectItem>
+                    <SelectItem value="Delhi">Delhi</SelectItem>
+                    <SelectItem value="Bangalore">Bangalore</SelectItem>
+                    <SelectItem value="Chennai">Chennai</SelectItem>
+                    <SelectItem value="Kolkata">Kolkata</SelectItem>
+                    <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                    <SelectItem value="Pune">Pune</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <WeatherSchedulingContent location={selectedLocation} />
+          </div>
+        )
+      case "carbon-footprint":
+        return renderCarbonFootprintContent()
+      case "risk-alerts":
+        return renderRiskAlertsContent()
       case "profile":
         return renderProfileContent()
       default:
         return renderDashboardContent()
     }
+  }
+
+  // Carbon Footprint tab content
+  const renderCarbonFootprintContent = () => {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <div className="flex items-center justify-between mb-2">
+              <CardTitle className="text-white">Carbon Footprint Analysis</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-white border-gray-600 hover:bg-gray-700"
+                onClick={goBack}
+              >
+                Back to Dashboard
+              </Button>
+            </div>
+            <CardDescription className="text-white">
+              Track and optimize the environmental impact of your construction project
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Project Carbon Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card className="bg-gray-700 border-gray-600">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-white">Total Carbon Footprint</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-end gap-2">
+                    <p className="text-3xl font-bold text-white">24.8</p>
+                    <p className="text-lg text-white">tonnes CO₂e</p>
+                  </div>
+                  <p className="text-sm text-white/70 mt-1">Based on current materials and methods</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-700 border-gray-600">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-white">Sustainability Score</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <p className="text-3xl font-bold text-white">7.2</p>
+                    <p className="text-lg text-white">/10</p>
+                  </div>
+                  <p className="text-sm text-white/70 mt-1">15% better than industry average</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-700 border-gray-600">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-white">Potential Reduction</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <p className="text-3xl font-bold text-green-400">-18%</p>
+                  </div>
+                  <p className="text-sm text-white/70 mt-1">With recommended optimizations</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Materials Carbon Breakdown */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Materials Carbon Breakdown</h3>
+              <div className="space-y-4">
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <h4 className="font-medium text-white">Concrete</h4>
+                    </div>
+                    <span className="text-white">12.4 tonnes CO₂e</span>
+                  </div>
+                  <Progress value={50} className="h-2 mb-1" />
+                  <p className="text-xs text-white/70">50% of total emissions</p>
+                </div>
+
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                      <h4 className="font-medium text-white">Steel</h4>
+                    </div>
+                    <span className="text-white">7.4 tonnes CO₂e</span>
+                  </div>
+                  <Progress value={30} className="h-2 mb-1" />
+                  <p className="text-xs text-white/70">30% of total emissions</p>
+                </div>
+
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <h4 className="font-medium text-white">Wood</h4>
+                    </div>
+                    <span className="text-white">2.5 tonnes CO₂e</span>
+                  </div>
+                  <Progress value={10} className="h-2 mb-1" />
+                  <p className="text-xs text-white/70">10% of total emissions</p>
+                </div>
+
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <h4 className="font-medium text-white">Other Materials</h4>
+                    </div>
+                    <span className="text-white">2.5 tonnes CO₂e</span>
+                  </div>
+                  <Progress value={10} className="h-2 mb-1" />
+                  <p className="text-xs text-white/70">10% of total emissions</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Sustainability Recommendations */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Sustainability Recommendations</h3>
+              <div className="space-y-3">
+                <div className="p-4 bg-green-600/20 border border-green-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-green-600/30 p-2 rounded-full">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-green-400"
+                      >
+                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Use Low-Carbon Concrete</h4>
+                      <p className="text-white/80 mt-1">
+                        Switching to low-carbon concrete can reduce your concrete emissions by up to 30%.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                          View Suppliers
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-green-600 text-green-400 hover:bg-green-600/20"
+                        >
+                          Calculate Savings
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-green-600/20 border border-green-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-green-600/30 p-2 rounded-full">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-green-400"
+                      >
+                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Optimize Steel Usage</h4>
+                      <p className="text-white/80 mt-1">
+                        Advanced structural analysis shows you can reduce steel by 15% without compromising integrity.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                          View Analysis
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-green-600/20 border border-green-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-green-600/30 p-2 rounded-full">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-green-400"
+                      >
+                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">Increase Recycled Content</h4>
+                      <p className="text-white/80 mt-1">
+                        Using materials with higher recycled content can reduce your overall carbon footprint.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                          Find Materials
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Carbon Offset Options */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Carbon Offset Options</h3>
+              <Card className="bg-gray-700 border-gray-600">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-blue-400"
+                        >
+                          <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path>
+                        </svg>
+                        <div>
+                          <h4 className="font-medium text-white">Renewable Energy Projects</h4>
+                          <p className="text-sm text-white/70">Support wind and solar energy development</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                      >
+                        Select
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-green-400"
+                        >
+                          <path d="M17 14V2"></path>
+                          <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z"></path>
+                        </svg>
+                        <div>
+                          <h4 className="font-medium text-white">Reforestation Programs</h4>
+                          <p className="text-sm text-white/70">Plant trees to absorb carbon dioxide</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                      >
+                        Select
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-amber-400"
+                        >
+                          <rect width="20" height="14" x="2" y="3" rx="2"></rect>
+                          <line x1="8" x2="16" y1="21" y2="21"></line>
+                          <line x1="12" x2="12" y1="17" y2="21"></line>
+                        </svg>
+                        <div>
+                          <h4 className="font-medium text-white">Community Projects</h4>
+                          <p className="text-sm text-white/70">Support sustainable development in communities</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                      >
+                        Select
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-blue-600/20 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium text-white">Total Offset Cost</h4>
+                      <span className="text-white font-bold">₹124,000</span>
+                    </div>
+                    <p className="text-sm text-white/70 mb-4">For 24.8 tonnes CO₂e at ₹5,000 per tonne</p>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Purchase Carbon Offsets</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Carbon Footprint Certification */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Carbon Footprint Certification</CardTitle>
+            <CardDescription className="text-white">
+              Get your project certified for its environmental performance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-700 rounded-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-green-400"
+                  >
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                    <path d="m9 12 2 2 4-4"></path>
+                  </svg>
+                  <h4 className="font-medium text-white">IGBC Green Homes Certification</h4>
+                </div>
+                <p className="text-white/80 mb-3">
+                  The Indian Green Building Council certification recognizes environmentally responsible buildings.
+                </p>
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white">Apply for Certification</Button>
+              </div>
+
+              <div className="p-4 bg-gray-700 rounded-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-blue-400"
+                  >
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                    <path d="m9 12 2 2 4-4"></path>
+                  </svg>
+                  <h4 className="font-medium text-white">GRIHA Rating</h4>
+                </div>
+                <p className="text-white/80 mb-3">
+                  Green Rating for Integrated Habitat Assessment is India's national rating system for green buildings.
+                </p>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Check Eligibility</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   // Dashboard tab content
@@ -618,6 +1519,27 @@ export default function HomeownerDashboard() {
                 </div>
               </TabsContent>
             </Tabs>
+
+            <div className="mt-4 space-y-4">
+              <Label className="text-white">Location</Label>
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                  <SelectItem value="Mumbai">Mumbai</SelectItem>
+                  <SelectItem value="Delhi">Delhi</SelectItem>
+                  <SelectItem value="Bangalore">Bangalore</SelectItem>
+                  <SelectItem value="Chennai">Chennai</SelectItem>
+                  <SelectItem value="Kolkata">Kolkata</SelectItem>
+                  <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                  <SelectItem value="Pune">Pune</SelectItem>
+                  <SelectItem value="Ahmedabad">Ahmedabad</SelectItem>
+                  <SelectItem value="Jaipur">Jaipur</SelectItem>
+                  <SelectItem value="Lucknow">Lucknow</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
           <CardFooter>
             <Button
@@ -841,7 +1763,17 @@ export default function HomeownerDashboard() {
       <div className="space-y-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white">My Projects</CardTitle>
+            <div className="flex items-center justify-between mb-2">
+              <CardTitle className="text-white">My Projects</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-white border-gray-600 hover:bg-gray-700"
+                onClick={goBack}
+              >
+                Back to Dashboard
+              </Button>
+            </div>
             <CardDescription className="text-white">Manage your ongoing construction projects</CardDescription>
           </CardHeader>
           <CardContent>
@@ -902,7 +1834,17 @@ export default function HomeownerDashboard() {
     return (
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-white">Materials Management</CardTitle>
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-white">Materials Management</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-white border-gray-600 hover:bg-gray-700"
+              onClick={goBack}
+            >
+              Back to Dashboard
+            </Button>
+          </div>
           <CardDescription className="text-white">Track and manage your construction materials</CardDescription>
         </CardHeader>
         <CardContent>
@@ -966,7 +1908,17 @@ export default function HomeownerDashboard() {
     return (
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-white">Expense Tracking</CardTitle>
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-white">Expense Tracking</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-white border-gray-600 hover:bg-gray-700"
+              onClick={goBack}
+            >
+              Back to Dashboard
+            </Button>
+          </div>
           <CardDescription className="text-white">Monitor and manage your construction expenses</CardDescription>
         </CardHeader>
         <CardContent>
@@ -1014,7 +1966,17 @@ export default function HomeownerDashboard() {
     return (
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-white">User Profile</CardTitle>
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-white">User Profile</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-white border-gray-600 hover:bg-gray-700"
+              onClick={goBack}
+            >
+              Back to Dashboard
+            </Button>
+          </div>
           <CardDescription className="text-white">Manage your account information</CardDescription>
         </CardHeader>
         <CardContent>
@@ -1061,13 +2023,254 @@ export default function HomeownerDashboard() {
     )
   }
 
+  // Risk Alerts tab content (Placeholder)
+  const renderRiskAlertsContentOld = () => {
+    return (
+      <Card className="bg-gray-800 border-gray-700">
+        <CardHeader>
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-white">Risk Alerts</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-white border-gray-600 hover:bg-gray-700"
+              onClick={goBack}
+            >
+              Back to Dashboard
+            </Button>
+          </div>
+          <CardDescription className="text-white">
+            Stay informed about potential risks in your construction projects.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-white">This section is under development. Check back soon for updates!</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Add this function to render the Labor Availability content after the renderCarbonFootprintContent function
+  // Labor Availability tab content
+  const renderLaborAvailabilityContent = () => {
+    // Filter and sort labor teams
+    const filteredTeams = laborTeamsData
+      .filter((team) => {
+        const matchesSearch =
+          team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          team.skills.some((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          team.type.toLowerCase().includes(searchTerm.toLowerCase())
+
+        const matchesType = filterType === "All" || team.type === filterType
+
+        return matchesSearch && matchesType
+      })
+      .sort((a, b) => {
+        if (sortBy === "distance") return a.distance - b.distance
+        if (sortBy === "rating") return b.rating - a.rating
+        if (sortBy === "availability") {
+          if (a.availability === "Immediate" && b.availability !== "Immediate") return -1
+          if (a.availability !== "Immediate" && b.availability === "Immediate") return 1
+          return a.availability.localeCompare(b.availability)
+        }
+        return 0
+      })
+
+    // Get unique labor types for filter
+    const laborTypes = ["All", ...new Set(laborTeamsData.map((team) => team.type))]
+
+    // Fallback map component in case Google Maps fails to load
+    const FallbackMap = () => (
+      <div className="bg-gray-700 rounded-lg p-4 h-96 flex flex-col items-center justify-center">
+        <div className="text-white mb-4">Map visualization unavailable</div>
+        <div className="text-sm text-white/70 max-w-md text-center mb-4">
+          We're unable to load the interactive map at this time. You can still view and filter labor teams below.
+        </div>
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => window.location.reload()}>
+          Retry Loading Map
+        </Button>
+      </div>
+    )
+
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <div className="flex items-center justify-between mb-2">
+              <CardTitle className="text-white">Labor Team Availability</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-white border-gray-600 hover:bg-gray-700"
+                onClick={goBack}
+              >
+                Back to Dashboard
+              </Button>
+            </div>
+            <CardDescription className="text-white">
+              Find and hire skilled labor teams near your construction site
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Search and Filter Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="search-labor" className="text-white mb-2 block">
+                  Search Teams
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="search-labor"
+                    placeholder="Search by name, skills, or type..."
+                    className="bg-gray-700 border-gray-600 text-white pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="filter-type" className="text-white mb-2 block">
+                  Filter by Type
+                </Label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger id="filter-type" className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                    {laborTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="sort-by" className="text-white mb-2 block">
+                  Sort by
+                </Label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger id="sort-by" className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                    <SelectItem value="distance">Nearest First</SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="availability">Earliest Available</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Labor Teams Map Visualization with Google Maps */}
+            <div className="bg-gray-700 rounded-lg p-4 h-96 relative overflow-hidden">
+              <div className="absolute inset-0">
+                <GoogleMapsLabor
+                  homeLocation={{ lat: 19.076, lng: 72.8777 }} // Mumbai coordinates
+                  laborTeams={filteredTeams.slice(0, 5)}
+                  selectedTeamId={selectedTeamId}
+                  setSelectedTeamId={setSelectedTeamId}
+                  showDirections={showDirections}
+                  setShowDirections={setShowDirections}
+                />
+              </div>
+              <div className="absolute top-4 right-4 z-10 bg-gray-800 bg-opacity-80 p-2 rounded text-xs text-white">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                  onClick={() => setShowDirections(!showDirections)}
+                >
+                  {showDirections ? "Hide Routes" : "Show Routes"}
+                </Button>
+              </div>
+              <div className="absolute bottom-4 left-4 z-10 bg-gray-800 bg-opacity-80 p-2 rounded text-xs text-white">
+                Showing labor teams within 10km of your location
+              </div>
+            </div>
+
+            {/* Rest of the component remains the same */}
+            {/* ... */}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Update the renderTabContent function to include the new labor-availability tab
+  // In the renderTabContent function, add a new case for "labor-availability"
+  const renderTabContentImpl = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return renderDashboardContent()
+      case "projects":
+        return renderProjectsContent()
+      case "materials":
+        return renderMaterialsContent()
+      case "expenses":
+        return renderExpensesContent()
+      case "weather-scheduling":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">Weather Scheduling</h2>
+              <div className="w-64">
+                <Label htmlFor="weather-location" className="text-white mb-2 block">
+                  Location
+                </Label>
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger id="weather-location" className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                    <SelectItem value="Mumbai">Mumbai</SelectItem>
+                    <SelectItem value="Delhi">Delhi</SelectItem>
+                    <SelectItem value="Bangalore">Bangalore</SelectItem>
+                    <SelectItem value="Chennai">Chennai</SelectItem>
+                    <SelectItem value="Kolkata">Kolkata</SelectItem>
+                    <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                    <SelectItem value="Pune">Pune</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <WeatherSchedulingContent location={selectedLocation} />
+          </div>
+        )
+      case "carbon-footprint":
+        return renderCarbonFootprintContent()
+      case "labor-availability":
+        return renderLaborAvailabilityContent()
+      case "risk-alerts":
+        return renderRiskAlertsContent()
+      case "profile":
+        return renderProfileContent()
+      default:
+        return renderDashboardContent()
+    }
+  }
+
+  // Update the sidebar navigation to include the new labor-availability item
+  // In the return statement, find the sidebar navigation section and add the new button after the Carbon Footprint button
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
-      {/* AI Prediction Sidebar */}
-      <div className="fixed right-0 top-1/2 transform -translate-y-1/2 z-10">
-        <AIPredictionSidebar projectType={constructionType} projectSize={subType} />
-      </div>
-
       {/* Mobile Menu Button */}
       <button
         className="lg:hidden fixed top-4 left-4 z-50 bg-gray-800 p-2 rounded-md"
@@ -1092,15 +2295,62 @@ export default function HomeownerDashboard() {
             <Button
               variant={activeTab === "dashboard" ? "default" : "ghost"}
               className={`w-full justify-start ${activeTab === "dashboard" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
-              onClick={() => setActiveTab("dashboard")}
+              onClick={() => navigateTo("dashboard")}
             >
               <Home className="mr-2 h-5 w-5" />
               Dashboard
             </Button>
             <Button
+              variant={activeTab === "weather-scheduling" ? "default" : "ghost"}
+              className={`w-full justify-start ${activeTab === "weather-scheduling" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
+              onClick={() => navigateTo("weather-scheduling")}
+            >
+              <CloudRain className="mr-2 h-5 w-5" />
+              Weather Scheduling
+            </Button>
+            <Button
+              variant={activeTab === "carbon-footprint" ? "default" : "ghost"}
+              className={`w-full justify-start ${activeTab === "carbon-footprint" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
+              onClick={() => navigateTo("carbon-footprint")}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-2"
+              >
+                <path d="M2 22a10 10 0 1 1 20 0"></path>
+                <path d="M16 8a4 4 0 1 0-8 0"></path>
+                <path d="M12 11v11"></path>
+              </svg>
+              Carbon Footprint
+            </Button>
+            <Button
+              variant={activeTab === "labor-availability" ? "default" : "ghost"}
+              className={`w-full justify-start ${activeTab === "labor-availability" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
+              onClick={() => navigateTo("labor-availability")}
+            >
+              <Users className="mr-2 h-5 w-5" />
+              Labor Availability
+            </Button>
+            <Button
+              variant={activeTab === "risk-alerts" ? "default" : "ghost"}
+              className={`w-full justify-start ${activeTab === "risk-alerts" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
+              onClick={() => navigateTo("risk-alerts")}
+            >
+              <AlertCircle className="mr-2 h-5 w-5" />
+              Risk Alerts
+            </Button>
+            <Button
               variant={activeTab === "projects" ? "default" : "ghost"}
               className={`w-full justify-start ${activeTab === "projects" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
-              onClick={() => setActiveTab("projects")}
+              onClick={() => navigateTo("projects")}
             >
               <Package className="mr-2 h-5 w-5" />
               My Projects
@@ -1108,7 +2358,7 @@ export default function HomeownerDashboard() {
             <Button
               variant={activeTab === "materials" ? "default" : "ghost"}
               className={`w-full justify-start ${activeTab === "materials" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
-              onClick={() => setActiveTab("materials")}
+              onClick={() => navigateTo("materials")}
             >
               <ShoppingBag className="mr-2 h-5 w-5" />
               Materials
@@ -1116,7 +2366,7 @@ export default function HomeownerDashboard() {
             <Button
               variant={activeTab === "expenses" ? "default" : "ghost"}
               className={`w-full justify-start ${activeTab === "expenses" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
-              onClick={() => setActiveTab("expenses")}
+              onClick={() => navigateTo("expenses")}
             >
               <DollarSign className="mr-2 h-5 w-5" />
               Expenses
@@ -1124,7 +2374,7 @@ export default function HomeownerDashboard() {
             <Button
               variant={activeTab === "profile" ? "default" : "ghost"}
               className={`w-full justify-start ${activeTab === "profile" ? "bg-blue-600 text-white" : "text-white hover:bg-gray-700 hover:text-white"}`}
-              onClick={() => setActiveTab("profile")}
+              onClick={() => navigateTo("profile")}
             >
               <User className="mr-2 h-5 w-5" />
               Profile
@@ -1145,19 +2395,51 @@ export default function HomeownerDashboard() {
       {/* Main Content */}
       <div className="flex-1 lg:ml-64 p-4 md:p-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-white">
-            {activeTab === "dashboard"
-              ? "Homeowner Dashboard"
-              : activeTab === "projects"
-                ? "My Projects"
-                : activeTab === "materials"
-                  ? "Materials Management"
-                  : activeTab === "expenses"
-                    ? "Expense Tracking"
-                    : activeTab === "profile"
-                      ? "User Profile"
-                      : "Homeowner Dashboard"}
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            {activeTab !== "dashboard" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-white border-gray-600 hover:bg-gray-700"
+                onClick={goBack}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-1"
+                >
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                Back
+              </Button>
+            )}
+            <h1 className="text-3xl font-bold text-white">
+              {activeTab === "dashboard"
+                ? "Homeowner Dashboard"
+                : activeTab === "projects"
+                  ? "My Projects"
+                  : activeTab === "materials"
+                    ? "Materials Management"
+                    : activeTab === "expenses"
+                      ? "Expense Tracking"
+                      : activeTab === "weather-scheduling"
+                        ? "Weather Scheduling"
+                        : activeTab === "carbon-footprint"
+                          ? "Carbon Footprint Sustainability"
+                          : activeTab === "profile"
+                            ? "User Profile"
+                            : activeTab === "labor-availability"
+                              ? "Labor Availability"
+                              : "Risk Alerts"}
+            </h1>
+          </div>
           <p className="text-white">
             {activeTab === "dashboard"
               ? "Plan and manage your construction projects"
@@ -1167,13 +2449,19 @@ export default function HomeownerDashboard() {
                   ? "Track and manage your construction materials"
                   : activeTab === "expenses"
                     ? "Monitor and manage your construction expenses"
-                    : activeTab === "profile"
-                      ? "Manage your account information"
-                      : "Plan and manage your construction projects"}
+                    : activeTab === "weather-scheduling"
+                      ? "Real-time weather data for optimal construction scheduling"
+                      : activeTab === "carbon-footprint"
+                        ? "Track and optimize the environmental impact of your construction project"
+                        : activeTab === "profile"
+                          ? "Manage your account information"
+                          : activeTab === "labor-availability"
+                            ? "Find and hire skilled labor teams near your construction site"
+                            : "Stay informed about potential risks in your construction projects."}
           </p>
         </header>
 
-        <div className="grid gap-6">{renderTabContent()}</div>
+        <div className="grid gap-6">{renderTabContentImpl()}</div>
       </div>
     </div>
   )

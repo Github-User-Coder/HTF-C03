@@ -1,6 +1,5 @@
 "use client"
 
-import { AIPredictionSidebar } from "@/components/ai-prediction-sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -127,11 +126,6 @@ export default function ContractorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
-      {/* AI Prediction Sidebar */}
-      <div className="fixed right-0 top-1/2 transform -translate-y-1/2 z-10">
-        <AIPredictionSidebar projectType={selectedProject.type} projectSize="" />
-      </div>
-
       {/* Mobile Menu Button */}
       <button
         className="lg:hidden fixed top-4 left-4 z-50 bg-gray-800 p-2 rounded-md"
