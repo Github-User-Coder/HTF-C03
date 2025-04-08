@@ -1,5 +1,8 @@
-# Smart Resource Optimization for Efficient Construction Management
 
+# Smart Resource Optimization for Efficient Construction Management
+## we have deployed our project,link->
+https://kzmkxe2xmhv3sk7vfjp1.lite.vusercontent.net/
+and we also developed an demo application 
 ## Overview
 
 This project is an AI-powered smart resource optimization tool designed to enhance efficiency, reduce costs, and promote sustainability in construction management. It provides a comprehensive suite of features, including real-time cost tracking, dynamic scheduling, carbon footprint analysis, and risk assessment, all integrated into a user-friendly dashboard.
