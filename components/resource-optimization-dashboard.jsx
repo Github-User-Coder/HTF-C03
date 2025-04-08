@@ -583,4 +583,3 @@ const ResourceOptimizationDashboard = () => {
 }
 
 export default ResourceOptimizationDashboard
-

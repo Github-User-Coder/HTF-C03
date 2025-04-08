@@ -325,4 +325,3 @@ export function AreaCalculator({ onCalculate, length, width }) {
     </Card>
   )
 }
-

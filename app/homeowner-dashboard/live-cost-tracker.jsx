@@ -116,6 +116,28 @@ export function LiveCostTracker({ totalCost, budgetLimit }) {
     setAlerts((prev) => prev.filter((alert) => alert.id !== alertId))
   }
 
+  // Determine cost change class
+  const getCostChangeClass = () => {
+    if (costChange > 0) return "text-red-400"
+    if (costChange < 0) return "text-green-400"
+    return "text-white"
+  }
+
+  // Generate SVG points for the chart
+  const generateChartPoints = () => {
+    if (costHistory.length <= 1) return ""
+
+    return costHistory
+      .map((cost, i) => {
+        const minCost = Math.min(...costHistory) * 0.95
+        const maxCost = Math.max(...costHistory) * 1.05
+        const range = maxCost - minCost
+        const y = 100 - ((cost - minCost) / range) * 100
+        return `${i},${y}`
+      })
+      .join(" ")
+  }
+
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -136,14 +158,9 @@ export function LiveCostTracker({ totalCost, budgetLimit }) {
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm text-white">Current Cost</div>
                 <div className="flex items-center text-sm">
-                  {costChange > 0 ? (
-                    <TrendingUp className="h-4 w-4 text-red-400 mr-1" />
-                  ) : costChange < 0 ? (
-                    <TrendingDown className="h-4 w-4 text-green-400 mr-1" />
-                  ) : null}
-                  <span className={costChange > 0 ? "text-red-400" : costChange < 0 ? "text-green-400" : "text-white"}>
-                    {costChange.toFixed(2)}%
-                  </span>
+                  {costChange > 0 && <TrendingUp className="h-4 w-4 text-red-400 mr-1" />}
+                  {costChange < 0 && <TrendingDown className="h-4 w-4 text-green-400 mr-1" />}
+                  <span className={getCostChangeClass()}>{costChange.toFixed(2)}%</span>
                 </div>
               </div>
               <div className="text-2xl font-bold text-white">₹{formatIndianCurrency(currentCost)}</div>
@@ -173,19 +190,7 @@ export function LiveCostTracker({ totalCost, budgetLimit }) {
             <div className="h-16 relative">
               {costHistory.length > 1 && (
                 <svg className="w-full h-full" viewBox={`0 0 ${costHistory.length} 100`} preserveAspectRatio="none">
-                  <polyline
-                    points={costHistory
-                      .map((cost, i) => {
-                        const minCost = Math.min(...costHistory) * 0.95
-                        const maxCost = Math.max(...costHistory) * 1.05
-                        const range = maxCost - minCost
-                        return `${i},${100 - ((cost - minCost) / range) * 100}`
-                      })
-                      .join(" ")}
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="2"
-                  />
+                  <polyline points={generateChartPoints()} fill="none" stroke="#3b82f6" strokeWidth="2" />
                 </svg>
               )}
             </div>
@@ -195,42 +200,38 @@ export function LiveCostTracker({ totalCost, budgetLimit }) {
           {alerts.length > 0 && (
             <div className="space-y-2">
               <div className="text-sm font-medium text-white">Alerts</div>
-              {alerts.slice(0, 3).map((alert) => (
-                <div
-                  key={alert.id}
-                  className={`p-3 rounded-lg flex items-start justify-between ${
-                    alert.type === "budget"
-                      ? "bg-red-900/30 border border-red-500"
-                      : alert.type === "increase"
-                        ? "bg-amber-900/30 border border-amber-500"
-                        : "bg-blue-900/30 border border-blue-500"
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <AlertCircle
-                      className={`h-5 w-5 mt-0.5 ${
-                        alert.type === "budget"
-                          ? "text-red-400"
-                          : alert.type === "increase"
-                            ? "text-amber-400"
-                            : "text-blue-400"
-                      }`}
-                    />
-                    <div>
-                      <div className="text-white font-medium">{alert.message}</div>
-                      <div className="text-xs text-white/70">{formatTime(alert.timestamp)}</div>
+              {alerts.slice(0, 3).map((alert) => {
+                let alertClass = "bg-blue-900/30 border border-blue-500"
+                let alertIcon = <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5" />
+
+                if (alert.type === "budget") {
+                  alertClass = "bg-red-900/30 border border-red-500"
+                  alertIcon = <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" />
+                } else if (alert.type === "increase") {
+                  alertClass = "bg-amber-900/30 border border-amber-500"
+                  alertIcon = <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
+                }
+
+                return (
+                  <div key={alert.id} className={`p-3 rounded-lg flex items-start justify-between ${alertClass}`}>
+                    <div className="flex items-start gap-2">
+                      {alertIcon}
+                      <div>
+                        <div className="text-white font-medium">{alert.message}</div>
+                        <div className="text-xs text-white/70">{formatTime(alert.timestamp)}</div>
+                      </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-white/70 hover:text-white"
+                      onClick={() => dismissAlert(alert.id)}
+                    >
+                      ×
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 text-white/70 hover:text-white"
-                    onClick={() => dismissAlert(alert.id)}
-                  >
-                    ×
-                  </Button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -238,4 +239,3 @@ export function LiveCostTracker({ totalCost, budgetLimit }) {
     </Card>
   )
 }
-

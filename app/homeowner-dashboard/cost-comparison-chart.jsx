@@ -34,7 +34,7 @@ function formatIndianCurrency(num) {
   return result + decimalPart
 }
 
-export function CostComparisonChart({ materialCost, laborCost, equipmentCost, overheadCost, totalCost }) {
+export function CostComparisonChart({ materialCost, laborCost, equipmentCost, overheadCost, totalCost, location }) {
   const [chartType, setChartType] = useState("bar")
 
   // Calculate percentages for pie chart
@@ -245,6 +245,7 @@ export function CostComparisonChart({ materialCost, laborCost, equipmentCost, ov
             </span>
           </div>
           <div className="pt-2 font-bold">Total: ₹{formatIndianCurrency(totalCost)}</div>
+          {location && <div className="text-sm text-white/70 mt-1">Location: {location}</div>}
         </div>
       </div>
     )
@@ -387,4 +388,3 @@ export function CostComparisonChart({ materialCost, laborCost, equipmentCost, ov
     </Card>
   )
 }
-

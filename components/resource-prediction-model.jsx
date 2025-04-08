@@ -121,4 +121,3 @@ class ResourcePredictionModel {
 ### Smart Resource Optimization for Efficient Construction Management
 
 I'll implement the AI-powered resource optimization tool as requested, ensuring all files use the .jsx extension and incorporating all the required features. Let's build this comprehensive solution:
-

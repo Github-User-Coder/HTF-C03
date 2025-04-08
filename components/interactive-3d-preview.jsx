@@ -5,6 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CuboidIcon as Cube, Maximize2, Minimize2, RotateCcw } from "lucide-react"
 
+const HOUSE_IMAGE_URL =
+  "https://www.bhg.com/thmb/0Fg9z0iU1t9clXIjFz0iQ1UQ0DQ=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/small-white-house-100744189-4x3-77d43ad2c41c4132b9296b9399944165.jpg"
+const BUILDING_IMAGE_URL =
+  "https://5.imimg.com/data5/SELLER/Default/2023/4/302647737/JL/TH/TW/117496598/residential-building-elevation-design-service.jpg"
+const SCHOOL_IMAGE_URL =
+  "https://www.shutterstock.com/image-photo/modern-school-building-exterior-sunny-260nw-2244987747.jpg"
+const COMMERCIAL_IMAGE_URL =
+  "https://media.istockphoto.com/id/1408997889/photo/modern-office-building-in-the-city.webp?b=1&s=612x612&w=0&k=20&c=y_t-5jS0c9wFo5-9-Zz9G-eclm3wA1n3-9I-G-Y0g0="
+const WAREHOUSE_IMAGE_URL =
+  "https://media.istockphoto.com/id/183732499/photo/warehouse-interior.jpg?s=612x612&w=0&k=20&c=t1a9vLg6b-m-n93-Tf-m3LgV3Ww_i8GqXmXN60E-o="
+
 export function Interactive3DPreview({ projectType, subType }) {
   const canvasRef = useRef(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -45,29 +56,32 @@ export function Interactive3DPreview({ projectType, subType }) {
       ctx.stroke()
     }
 
-    // Draw 3D building based on project type
-    ctx.save()
-    ctx.translate(canvas.width / 2, canvas.height / 2)
+    // Drawing functions
+    const draw = async () => {
+      ctx.save()
+      ctx.translate(canvas.width / 2, canvas.height / 2)
 
-    // Draw different building types
-    if (projectType === "house") {
-      drawHouse(ctx, subType)
-    } else if (projectType === "building") {
-      drawBuilding(ctx, subType)
-    } else if (projectType === "school") {
-      drawSchool(ctx)
-    } else if (projectType === "commercial") {
-      drawCommercial(ctx)
-    } else if (projectType === "warehouse") {
-      drawWarehouse(ctx)
-    } else {
-      // Default
-      drawHouse(ctx, "3BHK")
+      // Draw different building types
+      if (projectType === "house") {
+        await drawHouse(ctx, subType)
+      } else if (projectType === "building") {
+        await drawBuilding(ctx, subType)
+      } else if (projectType === "school") {
+        await drawSchool(ctx)
+      } else if (projectType === "commercial") {
+        await drawCommercial(ctx)
+      } else if (projectType === "warehouse") {
+        await drawWarehouse(ctx)
+      } else {
+        // Default
+        await drawHouse(ctx, "3BHK")
+      }
+
+      ctx.restore()
+      setIsLoading(false)
     }
 
-    ctx.restore()
-
-    setIsLoading(false)
+    draw()
   }, [projectType, subType])
 
   const toggleFullscreen = () => {
@@ -88,161 +102,99 @@ export function Interactive3DPreview({ projectType, subType }) {
 
   // Drawing functions
   const drawHouse = (ctx, type) => {
-    const size = type === "1BHK" ? 80 : type === "2BHK" ? 100 : 120
+    return new Promise((resolve) => {
+      const size = type === "1BHK" ? 80 : type === "2BHK" ? 100 : 120
 
-    // Base
-    ctx.fillStyle = "#3b82f6"
-    ctx.beginPath()
-    ctx.moveTo(-size, -size / 2)
-    ctx.lineTo(size, -size / 2)
-    ctx.lineTo(size, size / 2)
-    ctx.lineTo(-size, size / 2)
-    ctx.closePath()
-    ctx.fill()
-
-    // Roof
-    ctx.fillStyle = "#1d4ed8"
-    ctx.beginPath()
-    ctx.moveTo(-size - 20, -size / 2)
-    ctx.lineTo(0, -size - 20)
-    ctx.lineTo(size + 20, -size / 2)
-    ctx.closePath()
-    ctx.fill()
-
-    // Windows
-    ctx.fillStyle = "#bfdbfe"
-    const windowSize = 20
-    const floors = type === "1BHK" ? 1 : type === "2BHK" ? 2 : 3
-
-    for (let floor = 0; floor < floors; floor++) {
-      const yPos = -size / 2 + 30 + floor * 40
-
-      // Left window
-      ctx.fillRect(-size + 30, yPos, windowSize, windowSize)
-
-      // Right window
-      ctx.fillRect(size - 30 - windowSize, yPos, windowSize, windowSize)
-
-      if (type !== "1BHK") {
-        // Middle window
-        ctx.fillRect(-windowSize / 2, yPos, windowSize, windowSize)
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        ctx.drawImage(img, -size, -size / 2, size * 2, size)
+        resolve()
       }
-    }
-
-    // Door
-    ctx.fillStyle = "#475569"
-    ctx.fillRect(-15, size / 2 - 40, 30, 40)
+      img.onerror = () => {
+        console.error("Error loading house image")
+        resolve()
+      }
+      img.src = HOUSE_IMAGE_URL
+    })
   }
 
   const drawBuilding = (ctx, type) => {
-    const floors = type === "4-Story" ? 4 : type === "8-Story" ? 8 : 12
-    const width = 120
-    const floorHeight = 20
-    const height = floors * floorHeight
+    return new Promise((resolve) => {
+      const floors = type === "4-Story" ? 4 : type === "8-Story" ? 8 : 12
+      const width = 120
+      const floorHeight = 20
+      const height = floors * floorHeight
 
-    // Base
-    ctx.fillStyle = "#64748b"
-    ctx.fillRect(-width / 2, -height, width, height)
-
-    // Windows
-    ctx.fillStyle = "#bfdbfe"
-    const windowSize = 15
-    const windowsPerFloor = 5
-    const windowSpacing = width / (windowsPerFloor + 1)
-
-    for (let floor = 0; floor < floors; floor++) {
-      const yPos = -height + floor * floorHeight + 5
-
-      for (let w = 0; w < windowsPerFloor; w++) {
-        const xPos = -width / 2 + (w + 1) * windowSpacing - windowSize / 2
-        ctx.fillRect(xPos, yPos, windowSize, windowSize - 5)
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        ctx.drawImage(img, -width / 2, -height, width, height)
+        resolve()
       }
-    }
-
-    // Roof
-    ctx.fillStyle = "#334155"
-    ctx.fillRect(-width / 2 - 10, -height - 10, width + 20, 10)
-
-    // Ground
-    ctx.fillStyle = "#94a3b8"
-    ctx.fillRect(-width / 2 - 20, 0, width + 40, 5)
+      img.onerror = () => {
+        console.error("Error loading building image")
+        resolve()
+      }
+      img.src = BUILDING_IMAGE_URL
+    })
   }
 
   const drawSchool = (ctx) => {
-    // Main building
-    ctx.fillStyle = "#f97316"
-    ctx.fillRect(-100, -60, 200, 60)
+    return new Promise((resolve) => {
+      const width = 120
+      const height = 100
 
-    // Roof
-    ctx.fillStyle = "#c2410c"
-    ctx.beginPath()
-    ctx.moveTo(-110, -60)
-    ctx.lineTo(0, -90)
-    ctx.lineTo(110, -60)
-    ctx.closePath()
-    ctx.fill()
-
-    // Windows
-    ctx.fillStyle = "#bfdbfe"
-    for (let i = 0; i < 6; i++) {
-      ctx.fillRect(-90 + i * 30, -50, 20, 20)
-    }
-
-    // Door
-    ctx.fillStyle = "#475569"
-    ctx.fillRect(-15, 0, 30, -30)
-
-    // Flag
-    ctx.fillStyle = "#ef4444"
-    ctx.fillRect(80, -90, 20, 15)
-    ctx.fillStyle = "#475569"
-    ctx.fillRect(80, -90, 2, 30)
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        ctx.drawImage(img, -width / 2, -height, width, height)
+        resolve()
+      }
+      img.onerror = () => {
+        console.error("Error loading school image")
+        resolve()
+      }
+      img.src = SCHOOL_IMAGE_URL
+    })
   }
 
   const drawCommercial = (ctx) => {
-    // Glass building
-    ctx.fillStyle = "#0ea5e9"
-    ctx.fillRect(-80, -120, 160, 120)
+    return new Promise((resolve) => {
+      const width = 120
+      const height = 100
 
-    // Glass panels
-    ctx.fillStyle = "#0284c7"
-    for (let y = 0; y < 6; y++) {
-      for (let x = 0; x < 8; x++) {
-        ctx.fillRect(-80 + x * 20 + 1, -120 + y * 20 + 1, 18, 18)
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        ctx.drawImage(img, -width / 2, -height, width, height)
+        resolve()
       }
-    }
-
-    // Base
-    ctx.fillStyle = "#334155"
-    ctx.fillRect(-90, 0, 180, 10)
-
-    // Entrance
-    ctx.fillStyle = "#0f172a"
-    ctx.fillRect(-20, 0, 40, -30)
+      img.onerror = () => {
+        console.error("Error loading commercial image")
+        resolve()
+      }
+      img.src = COMMERCIAL_IMAGE_URL
+    })
   }
 
   const drawWarehouse = (ctx) => {
-    // Main structure
-    ctx.fillStyle = "#78716c"
-    ctx.fillRect(-100, -40, 200, 40)
+    return new Promise((resolve) => {
+      const width = 120
+      const height = 100
 
-    // Roof
-    ctx.fillStyle = "#57534e"
-    ctx.beginPath()
-    ctx.moveTo(-110, -40)
-    ctx.lineTo(0, -70)
-    ctx.lineTo(110, -40)
-    ctx.closePath()
-    ctx.fill()
-
-    // Door
-    ctx.fillStyle = "#44403c"
-    ctx.fillRect(-30, 0, 60, -30)
-
-    // Windows
-    ctx.fillStyle = "#bfdbfe"
-    ctx.fillRect(-80, -30, 20, 10)
-    ctx.fillRect(60, -30, 20, 10)
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        ctx.drawImage(img, -width / 2, -height, width, height)
+        resolve()
+      }
+      img.onerror = () => {
+        console.error("Error loading warehouse image")
+        resolve()
+      }
+      img.src = WAREHOUSE_IMAGE_URL
+    })
   }
 
   return (
@@ -291,4 +243,3 @@ export function Interactive3DPreview({ projectType, subType }) {
     </Card>
   )
 }
-

@@ -1,7 +1,12 @@
+if (!process.env.CARBON_API_KEY) {
+  console.error("CARBON_API_KEY environment variable is not set.")
+  throw new Error("CARBON_API_KEY environment variable is not set.")
+}
+
 import { NextResponse } from "next/server"
 
 // Replace with your actual API key
-const CARBON_API_KEY = "mX8MmPxThvTPQrwNoW53BA"
+const CARBON_API_KEY = process.env.CARBON_API_KEY
 
 export async function POST(request) {
   try {
@@ -27,4 +32,3 @@ export async function POST(request) {
     return NextResponse.json({ error: "Carbon API request failed", details: error.message }, { status: 500 })
   }
 }
-

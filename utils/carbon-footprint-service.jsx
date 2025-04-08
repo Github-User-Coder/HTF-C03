@@ -102,4 +102,3 @@ export function getFuelOptions() {
     { value: "propane", label: "Propane" },
   ]
 }
-

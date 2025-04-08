@@ -1,77 +1,61 @@
 import { NextResponse } from "next/server"
 
-// Generate a 5-day forecast with mock data
-function generateMockForecast(location) {
-  const list = []
-  const now = Date.now()
-  const day = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+// OpenWeatherMap API key
+const API_KEY = process.env.OPEN_WEATHER_API_KEY
 
-  // Weather conditions to cycle through
-  const conditions = ["Clear", "Clouds", "Rain", "Clear", "Clouds"]
-  const icons = ["01d", "02d", "10d", "01d", "03d"]
-
-  // Generate 5 days of forecast data with 3-hour intervals
-  for (let i = 0; i < 5; i++) {
-    // Create 8 entries per day (3-hour intervals)
-    for (let j = 0; j < 8; j++) {
-      const timestamp = now + i * day + j * 3 * 60 * 60 * 1000
-      const hourOfDay = new Date(timestamp).getHours()
-
-      // Temperature varies by time of day
-      let temp = 30 // base temp
-      if (hourOfDay >= 10 && hourOfDay <= 16) {
-        temp += 5 // warmer during day
-      } else if (hourOfDay >= 0 && hourOfDay <= 5) {
-        temp -= 5 // cooler at night
-      }
-
-      // Add some randomness
-      temp += Math.random() * 3 - 1.5
-
-      list.push({
-        dt: Math.floor(timestamp / 1000),
+// Fallback forecast data in case the API call fails
+const FALLBACK_FORECAST_DATA = {
+  list: Array(40)
+    .fill(null)
+    .map((_, index) => {
+      const hour = index * 3
+      const day = Math.floor(hour / 24)
+      return {
+        dt: Math.floor(Date.now() / 1000) + hour * 3600,
         main: {
-          temp: temp,
-          feels_like: temp + 2,
-          temp_min: temp - 1,
-          temp_max: temp + 1,
+          temp: 30 + Math.sin(day * 0.5) * 5,
+          feels_like: 32 + Math.sin(day * 0.5) * 5,
+          temp_min: 28 + Math.sin(day * 0.5) * 5,
+          temp_max: 33 + Math.sin(day * 0.5) * 5,
           pressure: 1010,
-          humidity: 65 + Math.random() * 20,
+          humidity: 65 + Math.sin(day) * 10,
         },
         weather: [
           {
-            id: 800,
-            main: conditions[i],
-            description: conditions[i].toLowerCase(),
-            icon: icons[i],
+            id: day % 3 === 0 ? 800 : day % 3 === 1 ? 801 : 500,
+            main: day % 3 === 0 ? "Clear" : day % 3 === 1 ? "Clouds" : "Rain",
+            description: day % 3 === 0 ? "clear sky" : day % 3 === 1 ? "scattered clouds" : "light rain",
+            icon: day % 3 === 0 ? "01d" : day % 3 === 1 ? "03d" : "10d",
           },
         ],
-        clouds: { all: Math.floor(Math.random() * 100) },
-        wind: { speed: 2 + Math.random() * 5, deg: Math.floor(Math.random() * 360) },
+        clouds: {
+          all: day % 3 === 1 ? 40 : 10,
+        },
+        wind: {
+          speed: 3.5 + Math.sin(day) * 2,
+          deg: 180 + day * 10,
+        },
         visibility: 10000,
-        pop: Math.random(),
-        sys: { pod: hourOfDay >= 6 && hourOfDay < 18 ? "d" : "n" },
-        dt_txt: new Date(timestamp).toISOString(),
-      })
-    }
-  }
-
-  return {
-    cod: "200",
-    message: 0,
-    cnt: list.length,
-    list: list,
-    city: {
-      id: 1275339,
-      name: location,
-      coord: { lat: 19.0144, lon: 72.8479 },
-      country: "IN",
-      population: 12442373,
-      timezone: 19800,
-      sunrise: Math.floor(now / 1000 - 21600),
-      sunset: Math.floor(now / 1000 + 21600),
+        pop: day % 3 === 2 ? 0.4 : 0,
+        sys: {
+          pod: hour % 24 < 12 ? "d" : "n",
+        },
+        dt_txt: new Date(Date.now() + hour * 3600 * 1000).toISOString().slice(0, 19).replace("T", " "),
+      }
+    }),
+  city: {
+    id: 1275339,
+    name: "Mumbai",
+    coord: {
+      lat: 19.0144,
+      lon: 72.8479,
     },
-  }
+    country: "IN",
+    population: 12442373,
+    timezone: 19800,
+    sunrise: Math.floor(Date.now() / 1000) - 21600,
+    sunset: Math.floor(Date.now() / 1000) + 21600,
+  },
 }
 
 export async function GET(request) {
@@ -84,18 +68,37 @@ export async function GET(request) {
   }
 
   try {
-    console.log("Forecast API called for location:", location)
+    console.log("Fetching real forecast data for location:", location)
 
-    // Generate mock forecast data
-    const mockForecast = generateMockForecast(location)
+    // Call the OpenWeatherMap API with the provided API key
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(location)}&units=metric&appid=${API_KEY}`,
+      { next: { revalidate: 3600 } }, // Cache for 1 hour
+    )
 
-    return NextResponse.json(mockForecast)
+    if (!response.ok) {
+      throw new Error(`Forecast API returned ${response.status}: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    console.log("Successfully fetched forecast data for:", location)
+
+    return NextResponse.json(data)
   } catch (error) {
     console.error("Error in forecast API route:", error.message)
 
-    // Return mock data as fallback
-    const mockForecast = generateMockForecast(location)
-    return NextResponse.json(mockForecast)
+    // Return fallback data instead of an error
+    console.log("Using fallback forecast data for:", location)
+
+    // Customize the fallback data with the requested location
+    const fallbackData = {
+      ...FALLBACK_FORECAST_DATA,
+      city: {
+        ...FALLBACK_FORECAST_DATA.city,
+        name: location,
+      },
+    }
+
+    return NextResponse.json(fallbackData)
   }
 }
-

@@ -81,6 +81,7 @@ const REAL_TIME_DATA = {
     Ahmedabad: { condition: "Extreme Heat", impact: "Moderate", delay: 2 },
     Jaipur: { condition: "Extreme Heat", impact: "High", delay: 4 },
     Lucknow: { condition: "Clear", impact: "Low", delay: 0 },
+    Mangalore: { condition: "Rain", impact: "Moderate", delay: 2 },
   },
   marketNews: [
     "Cement prices expected to rise by 5% next month due to increased demand",
@@ -112,6 +113,7 @@ const LOCATION_FACTORS = {
   Ahmedabad: 1.05,
   Jaipur: 1,
   Lucknow: 0.95,
+  Mangalore: 1.18,
 }
 
 export default function RealTimeEstimator() {
@@ -199,6 +201,12 @@ export default function RealTimeEstimator() {
     // Apply location factor
     const adjustedMaterialCost = totalMaterialCost * locationFactor * materialFactor
     const adjustedLaborCost = totalLaborCost * locationFactor * laborFactor
+
+    // Calculate equipment costs
+    const concreteHours = Math.min(sizeNum * 0.1, 24) // Cap at 24 hours per day
+    const concreteUsageDays = Math.ceil((sizeNum * 0.1) / 24) // Calculate days needed
+    const concreteHoursPerDay = Math.min(concreteHours, 8) // Realistic hours per day
+    const concreteEquipmentCost = concreteHoursPerDay * concreteUsageDays * 500 // 500 per hour
 
     // Calculate equipment and overhead costs
     const equipmentCost = adjustedMaterialCost * 0.15
@@ -427,6 +435,7 @@ export default function RealTimeEstimator() {
                       <SelectItem value="Ahmedabad">Ahmedabad</SelectItem>
                       <SelectItem value="Jaipur">Jaipur</SelectItem>
                       <SelectItem value="Lucknow">Lucknow</SelectItem>
+                      <SelectItem value="Mangalore">Mangalore</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -866,4 +875,3 @@ export default function RealTimeEstimator() {
     </div>
   )
 }
-

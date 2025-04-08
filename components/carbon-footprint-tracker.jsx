@@ -272,4 +272,3 @@ export default function CarbonFootprintTracker({ projectMaterials, equipmentUsag
     </div>
   )
 }
-

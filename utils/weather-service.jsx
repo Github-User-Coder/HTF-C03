@@ -146,6 +146,12 @@ export async function getWeather(location) {
 
     const data = await response.json()
     console.log("Weather data received:", data ? "success" : "empty")
+
+    // Validate the data structure
+    if (!data || !data.weather || !data.weather[0] || !data.main) {
+      throw new Error("Invalid weather data structure received")
+    }
+
     return data
   } catch (error) {
     console.error("Error in getWeather function:", error.message)
@@ -181,6 +187,12 @@ export async function getWeatherForecast(location) {
 
     const data = await response.json()
     console.log("Forecast data received:", data && data.list ? "success" : "empty")
+
+    // Validate the data structure
+    if (!data || !data.list || !Array.isArray(data.list) || data.list.length === 0) {
+      throw new Error("Invalid forecast data structure received")
+    }
+
     return data
   } catch (error) {
     console.error("Error in getWeatherForecast function:", error.message)
@@ -417,3 +429,240 @@ function formatDate(dateString) {
   return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
 }
 
+// Add this new function to analyze if a specific date should be rescheduled
+export function shouldRescheduleDate(date, forecastData) {
+  if (!forecastData || !forecastData.length) return false
+
+  // Convert date to string format for comparison
+  const dateString = typeof date === "string" ? date : date.toISOString().split("T")[0]
+
+  // Find forecast for this date
+  const dayForecast = forecastData.find((day) => day.date === dateString)
+
+  // If no forecast data available, don't reschedule
+  if (!dayForecast) return false
+
+  // Check if weather conditions warrant rescheduling
+  const condition = dayForecast.condition
+  const impact = dayForecast.impact
+
+  // Weather conditions that require rescheduling
+  return condition === "Rain" || condition === "Thunderstorm" || condition === "Snow" || impact === "High"
+}
+
+// Add this function to find the next suitable date
+export function findNextSuitableDate(date, forecastData, daysToCheck = 14) {
+  if (!forecastData || !forecastData.length) return new Date(date.getTime() + 86400000) // Default to next day
+
+  // Start with the next day
+  const checkDate = new Date(date)
+  checkDate.setDate(checkDate.getDate() + 1)
+
+  // Check up to daysToCheck days
+  for (let i = 0; i < daysToCheck; i++) {
+    const dateString = checkDate.toISOString().split("T")[0]
+
+    // If this date is suitable (not requiring rescheduling), return it
+    if (!shouldRescheduleDate(dateString, forecastData)) {
+      return checkDate
+    }
+
+    // Otherwise check the next day
+    checkDate.setDate(checkDate.getDate() + 1)
+  }
+
+  // If no suitable date found, return the last checked date
+  return checkDate
+}
+
+// Add an improved function to handle automatic task rescheduling based on weather sensitivity
+
+// At the end of the file, add this new function:
+// Shift a task by a given number of days, adjusting start and end dates
+export function shiftTaskByDays(task, days) {
+  if (!task) return null
+
+  const newStartDate = new Date(task.startDate || task.currentStartDate)
+  newStartDate.setDate(newStartDate.getDate() + days)
+
+  const newEndDate = new Date(task.endDate || task.currentEndDate)
+  newEndDate.setDate(newEndDate.getDate() + days)
+
+  return {
+    ...task,
+    currentStartDate: newStartDate,
+    currentEndDate: newEndDate,
+    rescheduled: true,
+    status: "Rescheduled",
+  }
+}
+
+// Function to maintain timeline sequence after task rescheduling
+export function maintainProjectTimeline(tasks) {
+  if (!tasks || tasks.length === 0) return []
+
+  // Sort tasks by start date first
+  const sortedTasks = [...tasks].sort(
+    (a, b) => (a.currentStartDate || a.startDate) - (b.currentStartDate || b.startDate),
+  )
+
+  // Ensure each task starts after the previous one ends
+  for (let i = 1; i < sortedTasks.length; i++) {
+    const prevTask = sortedTasks[i - 1]
+    const currentTask = sortedTasks[i]
+    const prevEndDate = prevTask.currentEndDate || prevTask.endDate
+    const currentStartDate = currentTask.currentStartDate || currentTask.startDate
+
+    // If current task starts before previous task ends, adjust it
+    if (currentStartDate < prevEndDate) {
+      // Calculate task duration to maintain it
+      const currentDuration =
+        (currentTask.currentEndDate || currentTask.endDate) - (currentTask.currentStartDate || currentTask.startDate)
+
+      // Set new start date to be right after previous task ends
+      const newStartDate = new Date(prevEndDate)
+      const newEndDate = new Date(newStartDate.getTime() + currentDuration)
+
+      sortedTasks[i] = {
+        ...currentTask,
+        currentStartDate: newStartDate,
+        currentEndDate: newEndDate,
+        status: currentTask.weatherSensitive ? "Rescheduled" : "Adjusted",
+      }
+    }
+  }
+
+  return sortedTasks
+}
+
+// Add this function to analyze weather impact on labor requirements
+export function analyzeLaborImpact(weatherData, laborRequirements, sensitivity = 0.5) {
+  if (!weatherData || !laborRequirements) {
+    return { labor: { ...laborRequirements }, impact: "None" }
+  }
+
+  // Clone labor requirements to avoid modifying the original
+  const adjustedLabor = { ...laborRequirements }
+
+  // Get weather condition and analyze impact
+  const mainWeather = weatherData.weather?.[0]?.main || "Clear"
+  let laborChangePercentage = 0
+  let impact = "Low"
+
+  // Determine labor change percentage based on weather condition
+  switch (mainWeather) {
+    case "Rain":
+      laborChangePercentage = 0.3 * sensitivity // 30% increase in labor needed
+      impact = "Moderate"
+      break
+    case "Thunderstorm":
+      laborChangePercentage = 0.5 * sensitivity // 50% increase
+      impact = "High"
+      break
+    case "Snow":
+      laborChangePercentage = 0.4 * sensitivity // 40% increase
+      impact = "High"
+      break
+    case "Clouds":
+      laborChangePercentage = 0.1 * sensitivity // 10% increase
+      impact = "Low"
+      break
+    case "Clear":
+      laborChangePercentage = 0 // No change needed
+      impact = "None"
+      break
+    default:
+      laborChangePercentage = 0.1 * sensitivity // Default 10% increase
+      impact = "Low"
+  }
+
+  // Adjust labor based on percentage
+  if (laborChangePercentage > 0) {
+    Object.keys(adjustedLabor).forEach((workerType) => {
+      const currentCount = adjustedLabor[workerType]
+      const additionalWorkers = Math.ceil(currentCount * laborChangePercentage)
+      adjustedLabor[workerType] = currentCount + additionalWorkers
+    })
+  }
+
+  return {
+    labor: adjustedLabor,
+    impact,
+    changePercentage: laborChangePercentage,
+  }
+}
+
+// Add this function to generate optimized labor plan based on weather forecast
+export function generateOptimizedLaborPlan(projectData, weatherForecast) {
+  if (!projectData || !weatherForecast) {
+    return null
+  }
+
+  // Clone project data to avoid modifying the original
+  const optimizedPlan = JSON.parse(JSON.stringify(projectData))
+
+  // Process each phase and adjust labor based on weather forecast
+  if (optimizedPlan.phases) {
+    optimizedPlan.phases.forEach((phase) => {
+      // Skip non-weather-sensitive phases
+      if (!phase.weatherSensitive) {
+        return
+      }
+
+      // Get relevant weather forecast for this phase
+      const phaseStartDate = new Date(phase.startDate)
+      const phaseEndDate = new Date(phase.endDate)
+
+      const relevantForecast = weatherForecast.filter((day) => {
+        const forecastDate = new Date(day.date)
+        return forecastDate >= phaseStartDate && forecastDate <= phaseEndDate
+      })
+
+      // If we have weather data, calculate average impact
+      if (relevantForecast.length > 0) {
+        let totalImpact = 0
+        let badWeatherDays = 0
+
+        // Calculate total impact
+        relevantForecast.forEach((day) => {
+          const impact = day.impact === "High" ? 0.5 : day.impact === "Moderate" ? 0.3 : 0.1
+
+          totalImpact += impact
+          if (day.impact === "High" || day.impact === "Moderate") {
+            badWeatherDays++
+          }
+        })
+
+        // Calculate average impact
+        const avgImpact = totalImpact / relevantForecast.length
+
+        // Adjust labor if significant impact
+        if (avgImpact > 0.2) {
+          const laborChanges = {}
+
+          // Apply impact to each worker type
+          Object.keys(phase.labor).forEach((workerType) => {
+            const currentCount = phase.labor[workerType]
+            const additionalWorkers = Math.ceil(currentCount * avgImpact * phase.sensitivity)
+
+            if (additionalWorkers > 0) {
+              laborChanges[workerType] = additionalWorkers
+              phase.labor[workerType] = currentCount + additionalWorkers
+            }
+          })
+
+          // Store changes for reporting
+          phase.laborChanges = laborChanges
+          phase.weatherImpact = {
+            avgImpact,
+            badWeatherDays,
+            description:
+              badWeatherDays > 0 ? `${badWeatherDays} days of adverse weather expected` : "Minimal weather impact",
+          }
+        }
+      }
+    })
+  }
+
+  return optimizedPlan
+}

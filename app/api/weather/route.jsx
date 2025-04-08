@@ -30,6 +30,9 @@ const FALLBACK_WEATHER_DATA = {
   cod: 200,
 }
 
+// OpenWeatherMap API key
+const API_KEY = "36250ac0459f2921a5a84b1c5da306b4"
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   let location = searchParams.get("location")
@@ -40,25 +43,22 @@ export async function GET(request) {
   }
 
   try {
-    // Use a free API key or a demo endpoint that doesn't require authentication
-    // This is a mock implementation that always returns fallback data
-    console.log("Weather API called for location:", location)
+    console.log("Fetching real weather data for location:", location)
 
-    // Return fallback data with the requested location
-    const fallbackData = {
-      ...FALLBACK_WEATHER_DATA,
-      name: location,
-      // Randomize temperature slightly to simulate real data
-      main: {
-        ...FALLBACK_WEATHER_DATA.main,
-        temp: Math.round(30 + Math.random() * 5),
-        humidity: Math.round(60 + Math.random() * 20),
-      },
-      // Update timestamp
-      dt: Date.now() / 1000,
+    // Call the OpenWeatherMap API with the provided API key
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&units=metric&appid=${API_KEY}`,
+      { next: { revalidate: 1800 } }, // Cache for 30 minutes
+    )
+
+    if (!response.ok) {
+      throw new Error(`Weather API returned ${response.status}: ${response.statusText}`)
     }
 
-    return NextResponse.json(fallbackData)
+    const data = await response.json()
+    console.log("Successfully fetched weather data for:", location)
+
+    return NextResponse.json(data)
   } catch (error) {
     console.error("Error in weather API route:", error.message)
 
@@ -74,4 +74,3 @@ export async function GET(request) {
     return NextResponse.json(fallbackData)
   }
 }
-

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertCircle,
   Building2,
@@ -24,6 +23,12 @@ import {
   User,
   Users,
   Warehouse,
+  MapPin,
+  Clock,
+  Briefcase,
+  Award,
+  Truck,
+  FileText,
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useCallback, useRef } from "react"
@@ -32,7 +37,7 @@ import { CostComparisonChart } from "./cost-comparison-chart"
 import { LiveCostTracker } from "./live-cost-tracker"
 import { Progress } from "@/components/ui/progress"
 import { WeatherSchedulingContent } from "@/components/weather-scheduling-content"
-import GoogleMapsLabor from "@/components/google-maps-labor"
+import { Badge } from "@/components/ui/badge"
 
 // Function to format numbers in Indian currency format
 function formatIndianCurrency(num) {
@@ -380,6 +385,21 @@ const laborTeamsData = [
   },
 ]
 
+// Define location factors
+const LOCATION_FACTORS = {
+  Mumbai: 1.2,
+  Delhi: 1.1,
+  Bangalore: 1.3,
+  Chennai: 1.0,
+  Kolkata: 0.9,
+  Hyderabad: 1.15,
+  Pune: 1.25,
+  Ahmedabad: 0.95,
+  Jaipur: 0.85,
+  Lucknow: 0.8,
+  Mangalore: 1.05,
+}
+
 export default function HomeownerDashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [siteDimensions, setSiteDimensions] = useState({ length: "", width: "" })
@@ -400,8 +420,7 @@ export default function HomeownerDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState("All")
   const [sortBy, setSortBy] = useState("distance")
-  const [selectedTeamId, setSelectedTeamId] = useState(null)
-  const [showDirections, setShowDirections] = useState(false)
+  const [teamHiredStates, setTeamHiredStates] = useState({})
 
   // Use refs to track previous values and prevent unnecessary updates
   const prevAreaRef = useRef(area)
@@ -430,6 +449,9 @@ export default function HomeownerDashboard() {
         const referenceArea = subType === "1BHK" ? 600 : subType === "2BHK" ? 900 : 1200
         const scaleFactor = area / referenceArea
 
+        // Apply location factor
+        const locationFactor = LOCATION_FACTORS[selectedLocation] || 1.0
+
         // Adjust material quantities and costs
         result.materials = result.materials.map((material) => {
           const originalQuantity = material.quantity.split(" ")
@@ -437,7 +459,7 @@ export default function HomeownerDashboard() {
           return {
             ...material,
             quantity: `${newQuantity} ${originalQuantity.slice(1).join(" ")}`,
-            cost: Math.round(material.cost * scaleFactor),
+            cost: Math.round(material.cost * scaleFactor * locationFactor),
           }
         })
 
@@ -446,7 +468,7 @@ export default function HomeownerDashboard() {
           return {
             ...labor,
             count: Math.max(1, Math.round(labor.count * scaleFactor)),
-            cost: Math.round(labor.cost * scaleFactor),
+            cost: Math.round(labor.cost * scaleFactor * locationFactor),
           }
         })
 
@@ -456,7 +478,7 @@ export default function HomeownerDashboard() {
             ...equipment,
             hours: equipment.hours ? Math.round(equipment.hours * scaleFactor) : undefined,
             days: equipment.days ? Math.round(equipment.days * scaleFactor) : undefined,
-            cost: Math.round(equipment.cost * scaleFactor),
+            cost: Math.round(equipment.cost * scaleFactor * locationFactor),
           }
         })
 
@@ -464,7 +486,7 @@ export default function HomeownerDashboard() {
         result.overhead = result.overhead.map((overhead) => {
           return {
             ...overhead,
-            cost: Math.round(overhead.cost * scaleFactor),
+            cost: Math.round(overhead.cost * scaleFactor * locationFactor),
           }
         })
 
@@ -484,14 +506,16 @@ export default function HomeownerDashboard() {
         setOverheadCost(calculatedOverheadCost)
         setTotalCost(result.totalCost)
 
-        // Update selected location
-        setSelectedLocation(typeof location === "string" ? location : "Mumbai")
+        // No need to update selectedLocation here as it's already a state variable set by the user
       } else if (constructionType === "building" && subType) {
         result = JSON.parse(JSON.stringify(projectEstimations.building[subType]))
 
         // Apply similar scaling logic as for houses
         const referenceArea = subType === "4-Story" ? 5000 : 10000
         const scaleFactor = area / referenceArea
+
+        // Apply location factor
+        const locationFactor = LOCATION_FACTORS[selectedLocation] || 1.0
 
         // Scale all costs
         result.materials = result.materials.map((material) => {
@@ -500,7 +524,7 @@ export default function HomeownerDashboard() {
           return {
             ...material,
             quantity: `${newQuantity} ${originalQuantity.slice(1).join(" ")}`,
-            cost: Math.round(material.cost * scaleFactor),
+            cost: Math.round(material.cost * scaleFactor * locationFactor),
           }
         })
 
@@ -508,7 +532,7 @@ export default function HomeownerDashboard() {
           return {
             ...labor,
             count: Math.max(1, Math.round(labor.count * scaleFactor)),
-            cost: Math.round(labor.cost * scaleFactor),
+            cost: Math.round(labor.cost * scaleFactor * locationFactor),
           }
         })
 
@@ -517,14 +541,14 @@ export default function HomeownerDashboard() {
             ...equipment,
             hours: equipment.hours ? Math.round(equipment.hours * scaleFactor) : undefined,
             days: equipment.days ? Math.round(equipment.days * scaleFactor) : undefined,
-            cost: Math.round(equipment.cost * scaleFactor),
+            cost: Math.round(equipment.cost * scaleFactor * locationFactor),
           }
         })
 
         result.overhead = result.overhead.map((overhead) => {
           return {
             ...overhead,
-            cost: Math.round(overhead.cost * scaleFactor),
+            cost: Math.round(overhead.cost * scaleFactor * locationFactor),
           }
         })
 
@@ -544,8 +568,7 @@ export default function HomeownerDashboard() {
         setOverheadCost(calculatedOverheadCost)
         setTotalCost(result.totalCost)
 
-        // Update selected location
-        setSelectedLocation(typeof location === "string" ? location : "Mumbai")
+        // No need to update selectedLocation here as it's already a state variable set by the user
       } else {
         // Default to 3BHK if no valid selection
         result = JSON.parse(JSON.stringify(projectEstimations.house["3BHK"]))
@@ -602,7 +625,7 @@ export default function HomeownerDashboard() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* High Priority Risks */}
-            <div>
+            
               <h3 className="text-lg font-semibold text-white mb-4">High Priority Risks</h3>
               <div className="space-y-3">
                 <div className="p-4 bg-red-600/20 border border-red-600/30 rounded-lg">
@@ -649,230 +672,229 @@ export default function HomeownerDashboard() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Medium Priority Risks */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Medium Priority Risks</h3>
-              <div className="space-y-3">
-                <div className="p-4 bg-amber-600/20 border border-amber-600/30 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-amber-600/30 p-2 rounded-full">
-                      <Package className="h-5 w-5 text-amber-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">Material Shortage</h4>
-                      <p className="text-white/80 mt-1">
-                        Steel delivery may be delayed by 2 weeks due to supply chain disruptions.
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
-                          Alternative Suppliers
-                        </Button>
+              {/* Medium Priority Risks */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Medium Priority Risks</h3>
+                <div className="space-y-3">
+                  <div className="p-4 bg-amber-600/20 border border-amber-600/30 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-amber-600/30 p-2 rounded-full">
+                        <Package className="h-5 w-5 text-amber-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white">Material Shortage</h4>
+                        <p className="text-white/80 mt-1">
+                          Steel delivery may be delayed by 2 weeks due to supply chain disruptions.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+                            Alternative Suppliers
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="p-4 bg-amber-600/20 border border-amber-600/30 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-amber-600/30 p-2 rounded-full">
-                      <Users className="h-5 w-5 text-amber-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">Labor Availability</h4>
-                      <p className="text-white/80 mt-1">
-                        Skilled electrician shortage predicted during weeks 8-10 of the project.
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
-                          Workforce Planning
-                        </Button>
+                  <div className="p-4 bg-amber-600/20 border border-amber-600/30 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-amber-600/30 p-2 rounded-full">
+                        <Users className="h-5 w-5 text-amber-400" />
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Low Priority Risks */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Low Priority Risks</h3>
-              <div className="space-y-3">
-                <div className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-blue-600/30 p-2 rounded-full">
-                      <DollarSign className="h-5 w-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">Price Fluctuation</h4>
-                      <p className="text-white/80 mt-1">
-                        Cement prices expected to increase by 3-5% in the next month.
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                          Procurement Strategy
-                        </Button>
+                      <div>
+                        <h4 className="font-medium text-white">Labor Availability</h4>
+                        <p className="text-white/80 mt-1">
+                          Skilled electrician shortage predicted during weeks 8-10 of the project.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+                            Workforce Planning
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Risk Mitigation Recommendations</CardTitle>
-            <CardDescription className="text-white">
-              AI-generated strategies to address identified project risks
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-700 rounded-lg">
-                <h4 className="font-medium text-white mb-2">Budget Management Plan</h4>
-                <ul className="space-y-2 text-white/80">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-                    <span>
-                      Review material specifications to identify cost-saving alternatives without compromising quality
+              {/* Low Priority Risks */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Low Priority Risks</h3>
+                <div className="space-y-3">
+                  <div className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-600/30 p-2 rounded-full">
+                        <DollarSign className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white">Price Fluctuation</h4>
+                        <p className="text-white/80 mt-1">
+                          Cement prices expected to increase by 3-5% in the next month.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                            Procurement Strategy
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white">Risk Mitigation Recommendations</CardTitle>
+              <CardDescription className="text-white">
+                AI-generated strategies to address identified project risks
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-700 rounded-lg">
+                  <h4 className="font-medium text-white mb-2">Budget Management Plan</h4>
+                  <ul className="space-y-2 text-white/80">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                      <span>
+                        Review material specifications to identify cost-saving alternatives without compromising quality
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                      <span>Implement weekly budget tracking meetings to identify and address overruns early</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                      <span>Consider phasing non-critical work to distribute costs over a longer period</span>
+                    </li>
+                  </ul>
+                  <Button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white">Generate Detailed Plan</Button>
+                </div>
+
+                <div className="p-4 bg-gray-700 rounded-lg">
+                  <h4 className="font-medium text-white mb-2">Weather Contingency Strategy</h4>
+                  <ul className="space-y-2 text-white/80">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                      <span>Rent temporary weather protection structures for critical foundation work</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                      <span>Reschedule exterior work to later phases when weather conditions improve</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                      <span>Accelerate interior work during rainy periods to maintain overall progress</span>
+                    </li>
+                  </ul>
+                  <Button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white">
+                    View Weather-Optimized Schedule
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white">Risk Monitoring Dashboard</CardTitle>
+              <CardDescription className="text-white">Real-time tracking of project risk indicators</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-white">Budget Risk</h4>
+                    <span className="px-2 py-1 bg-red-600/30 text-red-400 rounded-full text-xs font-medium">High</span>
+                  </div>
+                  <Progress value={75} className="h-2 mb-2" />
+                  <p className="text-xs text-white/70">15% over budget projection</p>
+                </div>
+
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-white">Schedule Risk</h4>
+                    <span className="px-2 py-1 bg-amber-600/30 text-amber-400 rounded-full text-xs font-medium">
+                      Medium
                     </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-                    <span>Implement weekly budget tracking meetings to identify and address overruns early</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-                    <span>Consider phasing non-critical work to distribute costs over a longer period</span>
-                  </li>
-                </ul>
-                <Button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white">Generate Detailed Plan</Button>
-              </div>
-
-              <div className="p-4 bg-gray-700 rounded-lg">
-                <h4 className="font-medium text-white mb-2">Weather Contingency Strategy</h4>
-                <ul className="space-y-2 text-white/80">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-                    <span>Rent temporary weather protection structures for critical foundation work</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-                    <span>Reschedule exterior work to later phases when weather conditions improve</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-                    <span>Accelerate interior work during rainy periods to maintain overall progress</span>
-                  </li>
-                </ul>
-                <Button className="mt-3 bg-blue-600 hover:bg-blue-700 text-white">
-                  View Weather-Optimized Schedule
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Risk Monitoring Dashboard</CardTitle>
-            <CardDescription className="text-white">Real-time tracking of project risk indicators</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-gray-700 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-white">Budget Risk</h4>
-                  <span className="px-2 py-1 bg-red-600/30 text-red-400 rounded-full text-xs font-medium">High</span>
+                  </div>
+                  <Progress value={45} className="h-2 mb-2" />
+                  <p className="text-xs text-white/70">7 days behind schedule</p>
                 </div>
-                <Progress value={75} className="h-2 mb-2" />
-                <p className="text-xs text-white/70">15% over budget projection</p>
+
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-white">Quality Risk</h4>
+                    <span className="px-2 py-1 bg-green-600/30 text-green-400 rounded-full text-xs font-medium">Low</span>
+                  </div>
+                  <Progress value={15} className="h-2 mb-2" />
+                  <p className="text-xs text-white/70">All inspections passed</p>
+                </div>
               </div>
 
               <div className="bg-gray-700 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-white">Schedule Risk</h4>
-                  <span className="px-2 py-1 bg-amber-600/30 text-amber-400 rounded-full text-xs font-medium">
-                    Medium
-                  </span>
+                <h4 className="font-medium text-white mb-3">Risk Trend Analysis</h4>
+                <div className="h-48 relative">
+                  {/* Simple line chart visualization */}
+                  <div className="absolute inset-0 flex items-end">
+                    <div className="h-[15%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[25%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[35%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[45%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[75%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[65%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[70%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[50%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                  </div>
+
+                  {/* Overlay grid lines */}
+                  <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                    <div className="border-b border-gray-600 h-1/4"></div>
+                    <div className="border-b border-gray-600 h-1/4"></div>
+                    <div className="border-b border-gray-600 h-1/4"></div>
+                    <div className="border-b border-gray-600 h-1/4"></div>
+                  </div>
+
+                  {/* Y-axis labels */}
+                  <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-white/70 pointer-events-none">
+                    <div>High</div>
+                    <div>Medium</div>
+                    <div>Low</div>
+                    <div>None</div>
+                  </div>
+
+                  {/* X-axis labels */}
+                  <div className="absolute left-12 right-0 bottom-0 translate-y-6 flex justify-between text-xs text-white/70 pointer-events-none">
+                    <div>Jan</div>
+                    <div>Feb</div>
+                    <div>Mar</div>
+                    <div>Apr</div>
+                    <div>May</div>
+                    <div>Jun</div>
+                    <div>Jul</div>
+                    <div>Aug</div>
+                    <div>Sep</div>
+                    <div>Oct</div>
+                    <div>Nov</div>
+                    <div>Dec</div>
+                  </div>
                 </div>
-                <Progress value={45} className="h-2 mb-2" />
-                <p className="text-xs text-white/70">7 days behind schedule</p>
+                <p className="text-sm text-white/70 mt-8">
+                  Risk levels have been increasing since May, primarily due to weather and supply chain factors.
+                </p>
               </div>
-
-              <div className="bg-gray-700 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-white">Quality Risk</h4>
-                  <span className="px-2 py-1 bg-green-600/30 text-green-400 rounded-full text-xs font-medium">Low</span>
-                </div>
-                <Progress value={15} className="h-2 mb-2" />
-                <p className="text-xs text-white/70">All inspections passed</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <h4 className="font-medium text-white mb-3">Risk Trend Analysis</h4>
-              <div className="h-48 relative">
-                {/* Simple line chart visualization */}
-                <div className="absolute inset-0 flex items-end">
-                  <div className="h-[15%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[25%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[35%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[45%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[75%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[65%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[70%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[50%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                  <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
-                </div>
-
-                {/* Overlay grid lines */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                  <div className="border-b border-gray-600 h-1/4"></div>
-                  <div className="border-b border-gray-600 h-1/4"></div>
-                  <div className="border-b border-gray-600 h-1/4"></div>
-                  <div className="border-b border-gray-600 h-1/4"></div>
-                </div>
-
-                {/* Y-axis labels */}
-                <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-white/70 pointer-events-none">
-                  <div>High</div>
-                  <div>Medium</div>
-                  <div>Low</div>
-                  <div>None</div>
-                </div>
-
-                {/* X-axis labels */}
-                <div className="absolute left-12 right-0 bottom-0 translate-y-6 flex justify-between text-xs text-white/70 pointer-events-none">
-                  <div>Jan</div>
-                  <div>Feb</div>
-                  <div>Mar</div>
-                  <div>Apr</div>
-                  <div>May</div>
-                  <div>Jun</div>
-                  <div>Jul</div>
-                  <div>Aug</div>
-                  <div>Sep</div>
-                  <div>Oct</div>
-                  <div>Nov</div>
-                  <div>Dec</div>
-                </div>
-              </div>
-              <p className="text-sm text-white/70 mt-8">
-                Risk levels have been increasing since May, primarily due to weather and supply chain factors.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
 
   // Render different content based on active tab
   const renderTabContent = () => {
@@ -906,6 +928,7 @@ export default function HomeownerDashboard() {
                     <SelectItem value="Kolkata">Kolkata</SelectItem>
                     <SelectItem value="Hyderabad">Hyderabad</SelectItem>
                     <SelectItem value="Pune">Pune</SelectItem>
+                    <SelectItem value="Mangalore">Mangalore</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1414,131 +1437,230 @@ export default function HomeownerDashboard() {
             <CardDescription className="text-white">Choose the type of construction project</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="house" onValueChange={setConstructionType}>
-              <TabsList className="grid grid-cols-5 bg-gray-700">
-                <TabsTrigger value="house" className="data-[state=active]:bg-blue-600 text-white">
-                  <Home className="h-4 w-4 mr-2" />
-                  House
-                </TabsTrigger>
-                <TabsTrigger value="building" className="data-[state=active]:bg-blue-600 text-white">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Building
-                </TabsTrigger>
-                <TabsTrigger value="school" className="data-[state=active]:bg-blue-600 text-white">
-                  <School className="h-4 w-4 mr-2" />
-                  School
-                </TabsTrigger>
-                <TabsTrigger value="commercial" className="data-[state=active]:bg-blue-600 text-white">
-                  <ShoppingBag className="h-4 w-4 mr-2" />
-                  Commercial
-                </TabsTrigger>
-                <TabsTrigger value="warehouse" className="data-[state=active]:bg-blue-600 text-white">
-                  <Warehouse className="h-4 w-4 mr-2" />
-                  Warehouse
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="house" className="mt-4">
-                <div className="space-y-4">
-                  <Label className="text-white">House Type</Label>
-                  <Select onValueChange={setSubType}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue placeholder="Select house type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      <SelectItem value="1BHK">1BHK</SelectItem>
-                      <SelectItem value="2BHK">2BHK</SelectItem>
-                      <SelectItem value="3BHK">3BHK</SelectItem>
-                      <SelectItem value="Duplex">Duplex</SelectItem>
-                      <SelectItem value="Villa">Villa</SelectItem>
-                    </SelectContent>
-                  </Select>
+            <div className="space-y-6">
+              {/* Construction Type Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div
+                  className={`bg-gray-700 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-105 ${constructionType === "house" ? "ring-2 ring-blue-500" : ""}`}
+                  onClick={() => setConstructionType("house")}
+                >
+                  <div className="h-36 bg-gray-600 relative">
+                    <img
+                      src="/placeholder.svg?height=144&width=250"
+                      alt="House"
+                      className="w-full h-full object-cover"
+                      style={{
+                        backgroundImage:
+                          "url(https://images.unsplash.com/photo-1576941089067-2de3c901e126?q=80&w=2940&auto=format&fit=crop)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                      <Home className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+                  <div className="p-3 text-center">
+                    <h3 className="text-lg font-medium text-white">House</h3>
+                    <p className="text-sm text-white/70">Residential projects</p>
+                  </div>
                 </div>
-              </TabsContent>
-              <TabsContent value="building" className="mt-4">
-                <div className="space-y-4">
-                  <Label className="text-white">Building Type</Label>
-                  <Select onValueChange={setSubType}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue placeholder="Select building type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      <SelectItem value="4-Story">4-Story</SelectItem>
-                      <SelectItem value="8-Story">8-Story</SelectItem>
-                      <SelectItem value="Skyscraper">Skyscraper</SelectItem>
-                      <SelectItem value="Commercial Office">Commercial Office</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-              <TabsContent value="school" className="mt-4">
-                <div className="space-y-4">
-                  <Label className="text-white">School Type</Label>
-                  <Select onValueChange={setSubType}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue placeholder="Select school type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      <SelectItem value="Primary">Primary</SelectItem>
-                      <SelectItem value="High School">High School</SelectItem>
-                      <SelectItem value="University">University</SelectItem>
-                      <SelectItem value="Auditorium">Auditorium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-              <TabsContent value="commercial" className="mt-4">
-                <div className="space-y-4">
-                  <Label className="text-white">Commercial Type</Label>
-                  <Select onValueChange={setSubType}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue placeholder="Select commercial type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      <SelectItem value="Retail">Retail</SelectItem>
-                      <SelectItem value="Mall">Mall</SelectItem>
-                      <SelectItem value="Corporate">Corporate</SelectItem>
-                      <SelectItem value="Mixed-Use">Mixed-Use</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-              <TabsContent value="warehouse" className="mt-4">
-                <div className="space-y-4">
-                  <Label className="text-white">Warehouse Type</Label>
-                  <Select onValueChange={setSubType}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue placeholder="Select warehouse type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      <SelectItem value="Storage Unit">Storage Unit</SelectItem>
-                      <SelectItem value="Distribution Center">Distribution Center</SelectItem>
-                      <SelectItem value="Industrial">Industrial</SelectItem>
-                      <SelectItem value="Cold Storage">Cold Storage</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-            </Tabs>
 
-            <div className="mt-4 space-y-4">
-              <Label className="text-white">Location</Label>
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                  <SelectItem value="Mumbai">Mumbai</SelectItem>
-                  <SelectItem value="Delhi">Delhi</SelectItem>
-                  <SelectItem value="Bangalore">Bangalore</SelectItem>
-                  <SelectItem value="Chennai">Chennai</SelectItem>
-                  <SelectItem value="Kolkata">Kolkata</SelectItem>
-                  <SelectItem value="Hyderabad">Hyderabad</SelectItem>
-                  <SelectItem value="Pune">Pune</SelectItem>
-                  <SelectItem value="Ahmedabad">Ahmedabad</SelectItem>
-                  <SelectItem value="Jaipur">Jaipur</SelectItem>
-                  <SelectItem value="Lucknow">Lucknow</SelectItem>
-                </SelectContent>
-              </Select>
+                <div
+                  className={`bg-gray-700 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-105 ${constructionType === "building" ? "ring-2 ring-blue-500" : ""}`}
+                  onClick={() => setConstructionType("building")}
+                >
+                  <div className="h-36 bg-gray-600 relative">
+                    <img
+                      src="/placeholder.svg?height=144&width=250"
+                      alt="Building"
+                      className="w-full h-full object-cover"
+                      style={{
+                        backgroundImage:
+                          "url(https://images.unsplash.com/photo-1486325212027-8081e485255e?q=80&w=2940&auto=format&fit=crop)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                      <Building2 className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+                  <div className="p-3 text-center">
+                    <h3 className="text-lg font-medium text-white">Building</h3>
+                    <p className="text-sm text-white/70">Multi-story structures</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`bg-gray-700 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-105 ${constructionType === "school" ? "ring-2 ring-blue-500" : ""}`}
+                  onClick={() => setConstructionType("school")}
+                >
+                  <div className="h-36 bg-gray-600 relative">
+                    <img
+                      src="/placeholder.svg?height=144&width=250"
+                      alt="School"
+                      className="w-full h-full object-cover"
+                      style={{
+                        backgroundImage:
+                          "url(https://images.unsplash.com/photo-1575517111839-3a3843ee7f5d?q=80&w=2960&auto=format&fit=crop)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                      <School className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+                  <div className="p-3 text-center">
+                    <h3 className="text-lg font-medium text-white">School</h3>
+                    <p className="text-sm text-white/70">Educational facilities</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`bg-gray-700 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-105 ${constructionType === "commercial" ? "ring-2 ring-blue-500" : ""}`}
+                  onClick={() => setConstructionType("commercial")}
+                >
+                  <div className="h-36 bg-gray-600 relative">
+                    <img
+                      src="/placeholder.svg?height=144&width=250"
+                      alt="Commercial"
+                      className="w-full h-full object-cover"
+                      style={{
+                        backgroundImage:
+                          "url(https://images.unsplash.com/photo-1555952517-2e8e729e0b44?q=80&w=2064&auto=format&fit=crop)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                      <ShoppingBag className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+                  <div className="p-3 text-center">
+                    <h3 className="text-lg font-medium text-white">Commercial</h3>
+                    <p className="text-sm text-white/70">Retail & office spaces</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`bg-gray-700 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-105 ${constructionType === "warehouse" ? "ring-2 ring-blue-500" : ""}`}
+                  onClick={() => setConstructionType("warehouse")}
+                >
+                  <div className="h-36 bg-gray-600 relative">
+                    <img
+                      src="/placeholder.svg?height=144&width=250"
+                      alt="Warehouse"
+                      className="w-full h-full object-cover"
+                      style={{
+                        backgroundImage:
+                          "url(https://images.unsplash.com/photo-1568992687947-868a62a9f521?q=80&w=2832&auto=format&fit=crop)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                      <Warehouse className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+                  <div className="p-3 text-center">
+                    <h3 className="text-lg font-medium text-white">Warehouse</h3>
+                    <p className="text-sm text-white/70">Industrial storage</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Conditional subtype selection based on selected construction type */}
+              {constructionType && (
+                <div className="bg-gray-700 p-4 rounded-lg space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-white">
+                      {constructionType === "house"
+                        ? "House Type"
+                        : constructionType === "building"
+                          ? "Building Type"
+                          : constructionType === "school"
+                            ? "School Type"
+                            : constructionType === "commercial"
+                              ? "Commercial Type"
+                              : "Warehouse Type"}
+                    </h3>
+                    {constructionType && subType && <Badge className="bg-blue-600">{subType}</Badge>}
+                  </div>
+
+                  <Select onValueChange={setSubType} value={subType}>
+                    <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                      <SelectValue placeholder={`Select ${constructionType} type`} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                      {constructionType === "house" && (
+                        <>
+                          <SelectItem value="1BHK">1BHK</SelectItem>
+                          <SelectItem value="2BHK">2BHK</SelectItem>
+                          <SelectItem value="3BHK">3BHK</SelectItem>
+                          <SelectItem value="Duplex">Duplex</SelectItem>
+                          <SelectItem value="Villa">Villa</SelectItem>
+                        </>
+                      )}
+                      {constructionType === "building" && (
+                        <>
+                          <SelectItem value="4-Story">4-Story</SelectItem>
+                          <SelectItem value="8-Story">8-Story</SelectItem>
+                          <SelectItem value="Skyscraper">Skyscraper</SelectItem>
+                          <SelectItem value="Commercial Office">Commercial Office</SelectItem>
+                        </>
+                      )}
+                      {constructionType === "school" && (
+                        <>
+                          <SelectItem value="Primary">Primary</SelectItem>
+                          <SelectItem value="High School">High School</SelectItem>
+                          <SelectItem value="University">University</SelectItem>
+                          <SelectItem value="Auditorium">Auditorium</SelectItem>
+                        </>
+                      )}
+                      {constructionType === "commercial" && (
+                        <>
+                          <SelectItem value="Retail">Retail</SelectItem>
+                          <SelectItem value="Mall">Mall</SelectItem>
+                          <SelectItem value="Corporate">Corporate</SelectItem>
+                          <SelectItem value="Mixed-Use">Mixed-Use</SelectItem>
+                        </>
+                      )}
+                      {constructionType === "warehouse" && (
+                        <>
+                          <SelectItem value="Storage Unit">Storage Unit</SelectItem>
+                          <SelectItem value="Distribution Center">Distribution Center</SelectItem>
+                          <SelectItem value="Industrial">Industrial</SelectItem>
+                          <SelectItem value="Cold Storage">Cold Storage</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <Label className="text-white">Location</Label>
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                    <SelectItem value="Mumbai">Mumbai</SelectItem>
+                    <SelectItem value="Delhi">Delhi</SelectItem>
+                    <SelectItem value="Bangalore">Bangalore</SelectItem>
+                    <SelectItem value="Chennai">Chennai</SelectItem>
+                    <SelectItem value="Kolkata">Kolkata</SelectItem>
+                    <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                    <SelectItem value="Pune">Pune</SelectItem>
+                    <SelectItem value="Ahmedabad">Ahmedabad</SelectItem>
+                    <SelectItem value="Jaipur">Jaipur</SelectItem>
+                    <SelectItem value="Lucknow">Lucknow</SelectItem>
+                    <SelectItem value="Mangalore">Mangalore</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
           <CardFooter>
@@ -1570,6 +1692,7 @@ export default function HomeownerDashboard() {
             equipmentCost={equipmentCost}
             overheadCost={overheadCost}
             totalCost={totalCost}
+            location={selectedLocation}
           />
         )}
 
@@ -2023,33 +2146,6 @@ export default function HomeownerDashboard() {
     )
   }
 
-  // Risk Alerts tab content (Placeholder)
-  const renderRiskAlertsContentOld = () => {
-    return (
-      <Card className="bg-gray-800 border-gray-700">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-white">Risk Alerts</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-white border-gray-600 hover:bg-gray-700"
-              onClick={goBack}
-            >
-              Back to Dashboard
-            </Button>
-          </div>
-          <CardDescription className="text-white">
-            Stay informed about potential risks in your construction projects.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-white">This section is under development. Check back soon for updates!</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
   // Add this function to render the Labor Availability content after the renderCarbonFootprintContent function
   // Labor Availability tab content
   const renderLaborAvailabilityContent = () => {
@@ -2079,18 +2175,22 @@ export default function HomeownerDashboard() {
     // Get unique labor types for filter
     const laborTypes = ["All", ...new Set(laborTeamsData.map((team) => team.type))]
 
-    // Fallback map component in case Google Maps fails to load
-    const FallbackMap = () => (
-      <div className="bg-gray-700 rounded-lg p-4 h-96 flex flex-col items-center justify-center">
-        <div className="text-white mb-4">Map visualization unavailable</div>
-        <div className="text-sm text-white/70 max-w-md text-center mb-4">
-          We're unable to load the interactive map at this time. You can still view and filter labor teams below.
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => window.location.reload()}>
-          Retry Loading Map
-        </Button>
-      </div>
-    )
+    const handleHireTeam = (teamId) => {
+      // Simulate sending a Twilio message
+      console.log(`Sending Twilio message to team ${teamId}...`)
+      // In a real application, you would use the Twilio API to send the message
+      // For example:
+      // twilioClient.messages
+      //   .create({
+      //     body: 'You have been hired for a project!',
+      //     to: '+1234567890', // Replace with the team's phone number
+      //     from: '+11234567890', // Replace with your Twilio phone number
+      //   })
+      //   .then((message) => console.sid));
+
+      // Update the teamHiredStates state
+      setTeamHiredStates((prev) => ({ ...prev, [teamId]: true }))
+    }
 
     return (
       <div className="space-y-6">
@@ -2179,35 +2279,343 @@ export default function HomeownerDashboard() {
               </div>
             </div>
 
-            {/* Labor Teams Map Visualization with Google Maps */}
-            <div className="bg-gray-700 rounded-lg p-4 h-96 relative overflow-hidden">
-              <div className="absolute inset-0">
-                <GoogleMapsLabor
-                  homeLocation={{ lat: 19.076, lng: 72.8777 }} // Mumbai coordinates
-                  laborTeams={filteredTeams.slice(0, 5)}
-                  selectedTeamId={selectedTeamId}
-                  setSelectedTeamId={setSelectedTeamId}
-                  showDirections={showDirections}
-                  setShowDirections={setShowDirections}
-                />
+            {/* Labor Teams Map Visualization */}
+            <div className="bg-gray-700 rounded-lg p-4 h-64 relative overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-full h-full relative">
+                  {/* Simple map visualization */}
+                  <div className="absolute inset-0 bg-gray-800 opacity-50"></div>
+
+                  {/* Center point (homeowner location) */}
+                  <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center">
+                      <Home className="w-3 h-3 text-white" />
+                    </div>
+                    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 px-2 py-1 rounded text-xs text-white whitespace-nowrap">
+                      Your Location
+                    </div>
+                  </div>
+
+                  {/* Labor team markers */}
+                  {filteredTeams.slice(0, 5).map((team, index) => {
+                    // Calculate position based on distance and a random angle
+                    const angle = (index / 5) * Math.PI * 2
+                    const distance = team.distance * 10 // Scale for visualization
+                    const maxDistance = 100 // Maximum distance in pixels
+                    const scaledDistance = Math.min(distance, maxDistance)
+                    const x = 50 + ((Math.cos(angle) * scaledDistance) / maxDistance) * 40
+                    const y = 50 + ((Math.sin(angle) * scaledDistance) / maxDistance) * 40
+
+                    return (
+                      <div
+                        key={team.id}
+                        className="absolute w-5 h-5 rounded-full bg-green-500 border-2 border-white flex items-center justify-center"
+                        style={{ left: `${x}%`, top: `${y}%` }}
+                      >
+                        <Users className="w-3 h-3 text-white" />
+                        <div className="absolute top-5 left-1/2 transform -translate-x-1/2 bg-gray-900 px-2 py-1 rounded text-xs text-white whitespace-nowrap">
+                          {team.name} ({team.distance} km)
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-              <div className="absolute top-4 right-4 z-10 bg-gray-800 bg-opacity-80 p-2 rounded text-xs text-white">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
-                  onClick={() => setShowDirections(!showDirections)}
-                >
-                  {showDirections ? "Hide Routes" : "Show Routes"}
-                </Button>
-              </div>
-              <div className="absolute bottom-4 left-4 z-10 bg-gray-800 bg-opacity-80 p-2 rounded text-xs text-white">
+              <div className="absolute bottom-4 left-4 bg-gray-800 bg-opacity-80 p-2 rounded text-xs text-white">
                 Showing labor teams within 10km of your location
               </div>
             </div>
 
-            {/* Rest of the component remains the same */}
-            {/* ... */}
+            {/* Labor Teams List */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Available Labor Teams</h3>
+
+              {filteredTeams.length === 0 ? (
+                <div className="bg-gray-700 rounded-lg p-6 text-center text-white">
+                  No labor teams found matching your criteria. Try adjusting your filters.
+                </div>
+              ) : (
+                filteredTeams.map((team) => (
+                  <Card key={team.id} className="bg-gray-700 border-gray-600">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-5 w-5 text-blue-400" />
+                            <h4 className="font-semibold text-white text-lg">{team.name}</h4>
+                          </div>
+                          <div className="flex items-center gap-1 text-amber-400">
+                            {Array(5)
+                              .fill(0)
+                              .map((_, i) => (
+                                <svg
+                                  key={i}
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill={i < Math.floor(team.rating) ? "currentColor" : "none"}
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                              ))}
+                            <span className="ml-1 text-sm">{team.rating}/5</span>
+                          </div>
+                          <p className="text-white/80 text-sm">
+                            {team.type} • {team.members} members
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {team.skills.map((skill, index) => (
+                              <span key={index} className="px-2 py-1 bg-gray-600 rounded-full text-xs text-white">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 md:text-right">
+                          <div className="flex items-center gap-2 md:justify-end">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span className="text-white/80 text-sm">
+                              {team.distance} km away • {team.location}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 md:justify-end">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span
+                              className={`text-sm ${team.availability === "Immediate" ? "text-green-400" : "text-white/80"}`}
+                            >
+                              {team.availability}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 md:justify-end">
+                            <Briefcase className="h-4 w-4 text-gray-400" />
+                            <span className="text-white/80 text-sm">{team.completedProjects} projects completed</span>
+                          </div>
+                          <div className="flex items-center gap-2 md:justify-end">
+                            <DollarSign className="h-4 w-4 text-gray-400" />
+                            <span className="text-white/80 text-sm">₹{team.hourlyRate}/hour</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-gray-600 flex flex-col sm:flex-row justify-between gap-3">
+                        <div className="text-white/80 text-sm">
+                          Contact: {team.contactPerson} • {team.phone}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => handleHireTeam(team.id)}
+                            disabled={teamHiredStates[team.id]}
+                          >
+                            {teamHiredStates[team.id] ? "Hired" : "Hire Now"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                            onClick={() => navigateTo(`/team/${team.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+
+            {/* Labor Demand Analytics */}
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Labor Demand Analytics</CardTitle>
+                <CardDescription className="text-white">Current labor market trends in your area</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium text-white">General Labor</h4>
+                      <span className="px-2 py-1 bg-green-600/30 text-green-400 rounded-full text-xs font-medium">
+                        High Availability
+                      </span>
+                    </div>
+                    <Progress value={75} className="h-2 mb-2" />
+                    <p className="text-xs text-white/70">75% of teams available</p>
+                  </div>
+
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium text-white">Skilled Electricians</h4>
+                      <span className="px-2 py-1 bg-amber-600/30 text-amber-400 rounded-full text-xs font-medium">
+                        Medium Availability
+                      </span>
+                    </div>
+                    <Progress value={45} className="h-2 mb-2" />
+                    <p className="text-xs text-white/70">45% of teams available</p>
+                  </div>
+
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium text-white">Specialized Masons</h4>
+                      <span className="px-2 py-1 bg-red-600/30 text-red-400 rounded-full text-xs font-medium">
+                        Low Availability
+                      </span>
+                    </div>
+                    <Progress value={15} className="h-2 mb-2" />
+                    <p className="text-xs text-white/70">15% of teams available</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <h4 className="font-medium text-white mb-3">Weekly Labor Rate Trends</h4>
+                  <div className="h-48 relative">
+                    {/* Simple line chart visualization */}
+                    <div className="absolute inset-0 flex items-end">
+                      <div className="h-[35%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[45%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[50%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[55%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[65%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[60%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[55%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[50%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[45%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                      <div className="h-[40%] w-[8.33%] bg-blue-500 opacity-70"></div>
+                    </div>
+
+                    {/* Overlay grid lines */}
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                      <div className="border-b border-gray-600 h-1/4"></div>
+                      <div className="border-b border-gray-600 h-1/4"></div>
+                      <div className="border-b border-gray-600 h-1/4"></div>
+                      <div className="border-b border-gray-600 h-1/4"></div>
+                    </div>
+
+                    {/* Y-axis labels */}
+                    <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-white/70 pointer-events-none">
+                      <div>₹600</div>
+                      <div>₹500</div>
+                      <div>₹400</div>
+                      <div>₹300</div>
+                    </div>
+
+                    {/* X-axis labels */}
+                    <div className="absolute left-12 right-0 bottom-0 translate-y-6 flex justify-between text-xs text-white/70 pointer-events-none">
+                      <div>Jan</div>
+                      <div>Feb</div>
+                      <div>Mar</div>
+                      <div>Apr</div>
+                      <div>May</div>
+                      <div>Jun</div>
+                      <div>Jul</div>
+                      <div>Aug</div>
+                      <div>Sep</div>
+                      <div>Oct</div>
+                      <div>Nov</div>
+                      <div>Dec</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-white/70 mt-8">
+                    Labor rates have been increasing since May due to high demand in the construction sector.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ETL Data Import Section */}
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Labor Data Management</CardTitle>
+                <CardDescription className="text-white">
+                  Import and manage labor team data via ETL pipelines
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-700 rounded-lg">
+                    <div className="flex items-center gap-3 mb-3">
+                      <FileText className="h-5 w-5 text-blue-400" />
+                      <h4 className="font-medium text-white">Import Labor Team Data</h4>
+                    </div>
+                    <p className="text-white/80 mb-3">
+                      Upload CSV files with labor team information to update the database. The ETL pipeline will
+                      automatically process and validate the data.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
+                        <Truck className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-white/80 mb-2">Drag and drop your CSV file here</p>
+                        <p className="text-xs text-white/60">or</p>
+                        <Button className="mt-2 bg-blue-600 hover:bg-blue-700 text-white">Browse Files</Button>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 bg-gray-600 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm text-white">labor_teams_2023.csv</span>
+                          </div>
+                          <span className="text-xs text-green-400">Imported</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-gray-600 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm text-white">skilled_workers_q2.csv</span>
+                          </div>
+                          <span className="text-xs text-green-400">Imported</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-gray-600 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm text-white">contractor_database.csv</span>
+                          </div>
+                          <span className="text-xs text-amber-400">Processing</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-gray-700 rounded-lg">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Award className="h-5 w-5 text-green-400" />
+                      <h4 className="font-medium text-white">ETL Pipeline Status</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/80">Last data refresh:</span>
+                        <span className="text-white">Today, 09:45</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/80">Records processed:</span>
+                        <span className="text-white">1,248</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/80">Data sources:</span>
+                        <span className="text-white">3 active sources</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/80">Next scheduled update:</span>
+                        <span className="text-white">Tomorrow, 06:00</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <Button variant="outline" className="border-green-600 text-green-400 hover:bg-green-600/20">
+                        View ETL Logs
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </CardContent>
         </Card>
       </div>
@@ -2247,6 +2655,7 @@ export default function HomeownerDashboard() {
                     <SelectItem value="Kolkata">Kolkata</SelectItem>
                     <SelectItem value="Hyderabad">Hyderabad</SelectItem>
                     <SelectItem value="Pune">Pune</SelectItem>
+                    <SelectItem value="Mangalore">Mangalore</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -2442,28 +2851,27 @@ export default function HomeownerDashboard() {
           </div>
           <p className="text-white">
             {activeTab === "dashboard"
-              ? "Plan and manage your construction projects"
+              ? "Plan and manage your construction projects with AI-powered insights"
               : activeTab === "projects"
-                ? "View and manage your ongoing construction projects"
+                ? "Track the progress of your ongoing construction projects"
                 : activeTab === "materials"
-                  ? "Track and manage your construction materials"
-                  : activeTab === "expenses"
-                    ? "Monitor and manage your construction expenses"
-                    : activeTab === "weather-scheduling"
-                      ? "Real-time weather data for optimal construction scheduling"
-                      : activeTab === "carbon-footprint"
-                        ? "Track and optimize the environmental impact of your construction project"
-                        : activeTab === "profile"
-                          ? "Manage your account information"
-                          : activeTab === "labor-availability"
-                            ? "Find and hire skilled labor teams near your construction site"
-                            : "Stay informed about potential risks in your construction projects."}
+                  ? "Manage your construction materials and track their status"
+                : activeTab === "expenses"
+                  ? "Monitor and manage your construction expenses"
+                : activeTab === "weather-scheduling"
+                  ? "Optimize your construction schedule based on weather forecasts"
+                : activeTab === "carbon-footprint"
+                  ? "Analyze and reduce the carbon footprint of your construction project"
+                : activeTab === "profile"
+                  ? "Manage your account information and preferences"
+                : activeTab === "labor-availability"
+                  ? "Find and hire skilled labor teams near your construction site"
+                  : "Manage project risks and implement mitigation strategies"}
           </p>
         </header>
 
-        <div className="grid gap-6">{renderTabContentImpl()}</div>
+        {renderTabContentImpl()}
       </div>
     </div>
   )
 }
-
